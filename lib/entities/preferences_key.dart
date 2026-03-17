@@ -1,3 +1,5 @@
+import 'package:cw_core/wallet_type.dart';
+
 class PreferencesKey {
   static const currentWalletType = 'current_wallet_type';
   static const currentWalletName = 'current_wallet_name';
@@ -136,4 +138,60 @@ class PreferencesKey {
   static const syncStatusDisplayMode = 'sync_status_display_mode';
   static const backgroundImage = 'background_image';
   static const mwebAdDismissed = "mweb_ad_dismissed";
+
+  static String? getCurrentNodeIdKey(WalletType type) {
+    switch (type) {
+      case WalletType.monero:
+        return currentNodeIdKey;
+      case WalletType.bitcoin:
+        return currentBitcoinElectrumSererIdKey;
+      case WalletType.litecoin:
+        return currentLitecoinElectrumSererIdKey;
+      case WalletType.haven:
+        return currentHavenNodeIdKey;
+      case WalletType.ethereum:
+        return currentEthereumNodeIdKey;
+      case WalletType.polygon:
+        return currentPolygonNodeIdKey;
+      case WalletType.base:
+        return currentBaseNodeIdKey;
+      case WalletType.arbitrum:
+        return currentArbitrumNodeIdKey;
+      case WalletType.bsc:
+        return currentBscNodeIdKey;
+      case WalletType.nano:
+        return currentNanoNodeIdKey;
+      case WalletType.bitcoinCash:
+        return currentBitcoinCashNodeIdKey;
+      case WalletType.solana:
+        return currentSolanaNodeIdKey;
+      case WalletType.tron:
+        return currentTronNodeIdKey;
+      case WalletType.wownero:
+        return currentWowneroNodeIdKey;
+      case WalletType.zano:
+        return currentZanoNodeIdKey;
+      case WalletType.decred:
+        return currentDecredNodeIdKey;
+      case WalletType.dogecoin:
+        return currentDogecoinNodeIdKey;
+      case WalletType.zcash:
+        return currentZcashNodeIdKey;
+      case WalletType.banano:
+        return currentBananoNodeIdKey;
+      default:
+        return null;
+    }
+  }
+
+  static String? getCurrentPowNodeIdKey(WalletType type) {
+    switch (type) {
+      case WalletType.nano:
+        return currentNanoPowNodeIdKey;
+      case WalletType.banano:
+        return currentBananoPowNodeIdKey;
+      default:
+        return null;
+    }
+  }
 }

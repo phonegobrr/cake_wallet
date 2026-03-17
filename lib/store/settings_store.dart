@@ -1695,10 +1695,10 @@ abstract class SettingsStoreBase with Store {
     final actionListDisplayMode = ObservableList<ActionListDisplayMode>();
     actionListDisplayMode.addAll(deserializeActionlistDisplayModes(
         sharedPreferences.getInt(PreferencesKey.displayActionListModeKey) ?? defaultActionsMode));
-    final pinLength = sharedPreferences.getInt(PreferencesKey.currentPinLength);
+    final pinLength = sharedPreferences.getInt(PreferencesKey.currentPinLength) ?? defaultPinLength;
     final savedLanguageCode =
         sharedPreferences.getString(PreferencesKey.currentLanguageCode) ?? 'en';
-    final builtinTor = sharedPreferences.getBool(PreferencesKey.currentBuiltinTor) ?? false;
+    final builtinTor = sharedPreferences.getBool(PreferencesKey.builtinTorKey) ?? false;
 
     final nodes = <WalletType, Node>{};
     final powNodes = <WalletType, Node>{};
