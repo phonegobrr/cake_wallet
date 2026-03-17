@@ -8,43 +8,57 @@ import 'package:cake_console/tui/tui_theme.dart';
 import 'package:cake_console/tui/terminal_driver.dart';
 import 'package:cake_console/tui/screen.dart';
 
-class DashboardScreen implements TuiScreen {
+class DashboardScreen extends TuiScreen {
   final CommandBus _bus;
   BalanceSnapshot? _balance;
   SyncStatusSummary? _syncStatus;
   List<TransactionSummary> _recentTxs = [];
   int _selectedTx = 0;
+  bool _isLoading = true;
 
-  DashboardScreen(this._bus) {
-    _refresh();
-  }
+  DashboardScreen(this._bus);
 
   @override
   String get title => 'Dashboard';
 
-  Future<void> _refresh() async {
-    final balResult = await _bus.dispatch('balance.get', {});
-    if (balResult.success) _balance = balResult.data as BalanceSnapshot?;
+  @override
+  Future<void> init() async => refresh();
 
-    final syncResult = await _bus.dispatch('sync.status', {});
-    if (syncResult.success) _syncStatus = syncResult.data as SyncStatusSummary?;
+  @override
+  Future<void> refresh() async {
+    try {
+      final balResult = await _bus.dispatch('balance.get', {});
+      if (balResult.success) _balance = balResult.data as BalanceSnapshot?;
 
-    final txResult = await _bus.dispatch('history.list', {'limit': 10});
-    if (txResult.success) _recentTxs = (txResult.data as List<TransactionSummary>?) ?? [];
+      final syncResult = await _bus.dispatch('sync.status', {});
+      if (syncResult.success) {
+        _syncStatus = syncResult.data as SyncStatusSummary?;
+      }
+
+      final txResult = await _bus.dispatch('history.list', {'limit': 10});
+      if (txResult.success) {
+        _recentTxs = (txResult.data as List<TransactionSummary>?) ?? [];
+      }
+    } catch (_) {}
+    _isLoading = false;
   }
 
   @override
   String render(int width, int height, CommandBus bus) {
+    if (_isLoading) return mutedStyle().render('  Loading...');
+
     final balText = _balance != null
         ? '${_balance!.available} ${_balance!.currencyTitle}'
         : 'No wallet open';
-    final balCard = balanceCardStyle().width(width ~/ 2).render(
-        'Available Balance\n$balText');
+    final balCard = balanceCardStyle()
+        .width(width ~/ 2)
+        .render('Available Balance\n$balText');
 
     final syncText = _syncStatus?.displayText ?? 'No wallet';
     final isSynced = _syncStatus?.isSynced ?? false;
-    final syncIndicator = statusStyle(isSynced).render(
-        '${isSynced ? "SYNCED" : "SYNCING"} $syncText');
+    final syncIndicator = statusStyle(isSynced)
+        .width(width - (width ~/ 2) - 3)
+        .render('${isSynced ? "SYNCED" : "SYNCING"} $syncText');
 
     final topRow = joinHorizontal(posTop, [balCard, '  ', syncIndicator]);
 
@@ -67,17 +81,19 @@ class DashboardScreen implements TuiScreen {
     }
 
     final actions = mutedStyle().render(
-        '[S]end  [R]eceive  [W]allets  [E]xchange  [H]istory');
+        '[S]end  [R]eceive  [W]allets  [E]xchange  [H]istory  [C]ontacts');
 
     return joinVertical(posLeft, [topRow, '', txSection, '', actions]);
   }
 
   @override
   void handleInput(TerminalEvent event) {
+    if (_recentTxs.isEmpty) return;
+    final maxIndex = _recentTxs.length - 1;
     if (event.key == TerminalKey.up) {
-      _selectedTx = (_selectedTx - 1).clamp(0, _recentTxs.length - 1);
+      _selectedTx = (_selectedTx - 1).clamp(0, maxIndex);
     } else if (event.key == TerminalKey.down) {
-      _selectedTx = (_selectedTx + 1).clamp(0, _recentTxs.length - 1);
+      _selectedTx = (_selectedTx + 1).clamp(0, maxIndex);
     }
   }
 }

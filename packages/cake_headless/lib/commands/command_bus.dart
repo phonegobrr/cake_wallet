@@ -28,12 +28,24 @@ class CommandBus {
       return CommandResult.error('UNKNOWN_COMMAND',
           message: 'Command "$name" not found');
     }
+    // Validate required args
     for (final arg in cmd.args.entries) {
       if (arg.value.required && !params.containsKey(arg.key)) {
         return CommandResult.error('MISSING_ARG',
             message: 'Required argument "${arg.key}" missing');
       }
     }
-    return cmd.execute(_ctx, params);
+    // Apply defaults for missing optional args
+    for (final arg in cmd.args.entries) {
+      if (!params.containsKey(arg.key) && arg.value.defaultValue != null) {
+        params[arg.key] = arg.value.defaultValue;
+      }
+    }
+    try {
+      return await cmd.execute(_ctx, params);
+    } catch (e, s) {
+      _ctx.logger.error('Command "$name" failed: $e', s);
+      return CommandResult.error('COMMAND_FAILED', message: e.toString());
+    }
   }
 }

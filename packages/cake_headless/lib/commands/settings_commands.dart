@@ -56,8 +56,8 @@ class SetSettingCommand extends WalletCommand<Map<String, String>> {
     CakeRuntimeContext ctx,
     Map<String, dynamic> params,
   ) async {
-    final key = params['key'] as String;
-    final value = params['value'] as String;
+    final key = params['key']?.toString() ?? '';
+    final value = params['value']?.toString() ?? '';
     await ctx.settings.setString(key, value);
     ctx.logger.info('Setting updated: $key = $value');
     return CommandResult.ok(

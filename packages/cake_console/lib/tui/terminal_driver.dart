@@ -16,6 +16,8 @@ enum TerminalKey {
   pageUp,
   pageDown,
   delete,
+  ctrlC,
+  resize,
   char,
 }
 
@@ -68,6 +70,8 @@ class TerminalDriver {
   TerminalEvent _parseInput(List<int> data) {
     if (data.length == 1) {
       switch (data[0]) {
+        case 3:
+          return TerminalEvent(TerminalKey.ctrlC);
         case 10:
         case 13:
           return TerminalEvent(TerminalKey.enter);
@@ -117,6 +121,7 @@ class TerminalDriver {
   void dispose() {
     _sub?.cancel();
     _controller?.close();
+    exitAlternateScreen();
     disableRawMode();
     showCursor();
   }

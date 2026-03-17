@@ -6,24 +6,32 @@ import 'package:cake_console/tui/terminal_driver.dart';
 import 'package:cake_console/tui/screen.dart';
 import 'package:cake_console/tui/widgets/qr_terminal.dart';
 
-class ReceiveScreen implements TuiScreen {
+class ReceiveScreen extends TuiScreen {
   final CommandBus _bus;
   AddressEntry? _address;
+  bool _isLoading = true;
 
-  ReceiveScreen(this._bus) {
-    _refresh();
-  }
+  ReceiveScreen(this._bus);
 
   @override
   String get title => 'Receive';
 
-  Future<void> _refresh() async {
-    final result = await _bus.dispatch('receive.address', {});
-    if (result.success) _address = result.data as AddressEntry?;
+  @override
+  Future<void> init() async => refresh();
+
+  @override
+  Future<void> refresh() async {
+    try {
+      final result = await _bus.dispatch('receive.address', {});
+      if (result.success) _address = result.data as AddressEntry?;
+    } catch (_) {}
+    _isLoading = false;
   }
 
   @override
   String render(int width, int height, CommandBus bus) {
+    if (_isLoading) return mutedStyle().render('  Loading...');
+
     final header = panelStyle().width(width - 4).render('Receive');
 
     if (_address == null) {
@@ -34,7 +42,8 @@ class ReceiveScreen implements TuiScreen {
       ]);
     }
 
-    final addrText = Style().bold(true).foreground(cakeText).render(_address!.address);
+    final addrText =
+        Style().bold(true).foreground(cakeText).render(_address!.address);
     final qr = renderQrCode(_address!.address);
 
     return joinVertical(posLeft, [

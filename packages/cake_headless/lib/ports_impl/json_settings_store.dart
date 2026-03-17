@@ -22,9 +22,10 @@ class JsonSettingsStore implements SettingsStorePort {
   }
 
   Future<void> _save() async {
-    final file = File(_filePath);
-    await file.parent.create(recursive: true);
-    await file.writeAsString(jsonEncode(_cache ?? {}));
+    final tempFile = File('$_filePath.tmp');
+    await tempFile.parent.create(recursive: true);
+    await tempFile.writeAsString(jsonEncode(_cache ?? {}));
+    await tempFile.rename(_filePath);
   }
 
   @override

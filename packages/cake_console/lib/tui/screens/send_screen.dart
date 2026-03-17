@@ -4,7 +4,7 @@ import 'package:cake_console/tui/tui_theme.dart';
 import 'package:cake_console/tui/terminal_driver.dart';
 import 'package:cake_console/tui/screen.dart';
 
-class SendScreen implements TuiScreen {
+class SendScreen extends TuiScreen {
   final CommandBus _bus;
   String _address = '';
   String _amount = '';
@@ -18,20 +18,26 @@ class SendScreen implements TuiScreen {
   String get title => 'Send';
 
   @override
+  bool get capturesInput => true;
+
+  @override
   String render(int width, int height, CommandBus bus) {
     final header = panelStyle().width(width - 4).render('Send Transaction');
 
     final addrLabel = _focusField == 0
         ? Style().bold(true).foreground(cakeText).render('> Address: ')
         : mutedStyle().render('  Address: ');
-    final addrValue = _address.isEmpty ? mutedStyle().render('(enter address)') : _address;
+    final addrValue =
+        _address.isEmpty ? mutedStyle().render('(enter address)') : _address;
 
     final amtLabel = _focusField == 1
         ? Style().bold(true).foreground(cakeText).render('> Amount:  ')
         : mutedStyle().render('  Amount:  ');
-    final amtValue = _amount.isEmpty ? mutedStyle().render('(enter amount)') : _amount;
+    final amtValue =
+        _amount.isEmpty ? mutedStyle().render('(enter amount)') : _amount;
 
-    final hints = mutedStyle().render('Up/Down: switch field  Enter: send  Esc: clear');
+    final hints =
+        mutedStyle().render('Up/Down: switch field  Enter: send  Esc: clear');
 
     final parts = <String>[
       header,
@@ -60,8 +66,10 @@ class SendScreen implements TuiScreen {
       _statusMessage = null;
     } else if (event.key == TerminalKey.enter) {
       _submitSend();
-    } else if (event.key == TerminalKey.up || event.key == TerminalKey.down) {
-      _focusField = (_focusField + 1) % 2;
+    } else if (event.key == TerminalKey.up) {
+      _focusField = (_focusField - 1).clamp(0, 1);
+    } else if (event.key == TerminalKey.down) {
+      _focusField = (_focusField + 1).clamp(0, 1);
     } else if (event.key == TerminalKey.backspace) {
       if (_focusField == 0 && _address.isNotEmpty) {
         _address = _address.substring(0, _address.length - 1);
@@ -83,6 +91,8 @@ class SendScreen implements TuiScreen {
       _statusIsError = true;
       return;
     }
+    _statusMessage = 'Sending...';
+    _statusIsError = false;
     _bus.dispatch('send', {
       'address': _address,
       'amount': _amount,
@@ -96,6 +106,7 @@ class SendScreen implements TuiScreen {
         _statusMessage = result.message ?? result.errorCode ?? 'Send failed';
         _statusIsError = true;
       }
+      onStateChanged?.call();
     });
   }
 }

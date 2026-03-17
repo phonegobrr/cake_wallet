@@ -4,7 +4,7 @@ import 'package:cake_console/tui/tui_theme.dart';
 import 'package:cake_console/tui/terminal_driver.dart';
 import 'package:cake_console/tui/screen.dart';
 
-class ExchangeScreen implements TuiScreen {
+class ExchangeScreen extends TuiScreen {
   final CommandBus _bus;
   String _fromCurrency = '';
   String _toCurrency = '';
@@ -17,6 +17,9 @@ class ExchangeScreen implements TuiScreen {
 
   @override
   String get title => 'Exchange';
+
+  @override
+  bool get capturesInput => true;
 
   @override
   String render(int width, int height, CommandBus bus) {
@@ -75,7 +78,7 @@ class ExchangeScreen implements TuiScreen {
       _getQuote();
     } else if (event.key == TerminalKey.up) {
       _focusField = (_focusField - 1 + 3) % 3;
-    } else if (event.key == TerminalKey.down || event.key == TerminalKey.tab) {
+    } else if (event.key == TerminalKey.down) {
       _focusField = (_focusField + 1) % 3;
     } else if (event.key == TerminalKey.backspace) {
       _deleteChar();
@@ -125,6 +128,8 @@ class ExchangeScreen implements TuiScreen {
       _statusIsError = true;
       return;
     }
+    _statusMessage = 'Getting quote...';
+    _statusIsError = false;
     _bus.dispatch('swap.quote', {
       'from': _fromCurrency,
       'to': _toCurrency,
@@ -134,9 +139,11 @@ class ExchangeScreen implements TuiScreen {
         _statusMessage = 'Quote received';
         _statusIsError = false;
       } else {
-        _statusMessage = result.message ?? result.errorCode ?? 'Quote failed';
+        _statusMessage =
+            result.message ?? result.errorCode ?? 'Quote failed';
         _statusIsError = true;
       }
+      onStateChanged?.call();
     });
   }
 }

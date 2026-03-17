@@ -34,8 +34,8 @@ class SendCommand extends WalletCommand<SendResult> {
     }
     final wallet = ctx.wallet as WalletBase;
 
-    final address = params['address'] as String;
-    final amount = params['amount'] as String;
+    final address = params['address']?.toString() ?? '';
+    final amount = params['amount']?.toString() ?? '';
 
     ctx.logger.info(
         'Preparing transaction: $amount ${wallet.currency.title} -> $address');

@@ -24,6 +24,18 @@ class TuiApp {
   late final List<TuiScreen> screens;
   int _activeTab = 0;
   StreamSubscription? _eventSub;
+  Timer? _refreshTimer;
+  bool _rendering = false;
+
+  // Hotkey-to-tab mapping
+  static const _hotkeyMap = {
+    's': 2, // Send
+    'r': 3, // Receive
+    'w': 1, // Wallets
+    'e': 5, // Exchange
+    'h': 4, // History
+    'c': 7, // Contacts
+  };
 
   TuiApp({
     required this.commandBus,
@@ -39,66 +51,157 @@ class TuiApp {
       SettingsScreen(commandBus),
       ContactsScreen(commandBus),
     ];
+
+    // Wire render callbacks for async state changes
+    for (final screen in screens) {
+      screen.onStateChanged = () => _render();
+    }
   }
 
   Future<void> run() async {
+    // Signal handlers for clean shutdown
+    final sigintSub = ProcessSignal.sigint.watch().listen((_) {
+      _cleanup();
+      exit(0);
+    });
+    StreamSubscription? sigtermSub;
+    if (!Platform.isWindows) {
+      sigtermSub = ProcessSignal.sigterm.watch().listen((_) {
+        _cleanup();
+        exit(0);
+      });
+      // Handle terminal resize
+      ProcessSignal.sigwinch.watch().listen((_) => _render());
+    }
+
     terminal.enableRawMode();
     terminal.enterAlternateScreen();
     terminal.hideCursor();
 
-    _eventSub = eventBus.events.listen((_) => _render());
+    try {
+      _eventSub = eventBus.events.listen((_) => _render());
 
-    _render();
-
-    await for (final event in terminal.events) {
-      if (event.key == TerminalKey.char && event.char == 'q') {
-        break;
-      }
-      if (event.key == TerminalKey.tab) {
-        _activeTab = (_activeTab + 1) % screens.length;
-      }
-      if (event.key == TerminalKey.shiftTab) {
-        _activeTab = (_activeTab - 1 + screens.length) % screens.length;
-      }
-      screens[_activeTab].handleInput(event);
+      // Initialize and render first screen
+      await screens[_activeTab].init();
+      await screens[_activeTab].refresh();
+      screens[_activeTab].onEnter();
       _render();
-    }
 
-    _cleanup();
+      // Periodic refresh for sync status, balance, etc.
+      _refreshTimer = Timer.periodic(Duration(seconds: 5), (_) async {
+        await screens[_activeTab].refresh();
+        _render();
+      });
+
+      await for (final event in terminal.events) {
+        // Ctrl+C always quits
+        if (event.key == TerminalKey.ctrlC) {
+          break;
+        }
+
+        // 'q' quits only when the active screen doesn't capture input
+        if (event.key == TerminalKey.char &&
+            event.char == 'q' &&
+            !screens[_activeTab].capturesInput) {
+          break;
+        }
+
+        // Hotkey shortcuts only when not capturing input
+        if (event.key == TerminalKey.char &&
+            !screens[_activeTab].capturesInput &&
+            event.char != null) {
+          final tabIdx = _hotkeyMap[event.char!.toLowerCase()];
+          if (tabIdx != null) {
+            await _switchTab(tabIdx);
+            _render();
+            continue;
+          }
+        }
+
+        // Tab/Shift-Tab only when active screen doesn't capture input
+        if (event.key == TerminalKey.tab &&
+            !screens[_activeTab].capturesInput) {
+          await _switchTab((_activeTab + 1) % screens.length);
+          _render();
+          continue;
+        }
+        if (event.key == TerminalKey.shiftTab &&
+            !screens[_activeTab].capturesInput) {
+          await _switchTab((_activeTab - 1 + screens.length) % screens.length);
+          _render();
+          continue;
+        }
+
+        screens[_activeTab].handleInput(event);
+        _render();
+      }
+    } catch (e) {
+      stderr.writeln('TUI error: $e');
+    } finally {
+      sigintSub.cancel();
+      sigtermSub?.cancel();
+      _cleanup();
+    }
+  }
+
+  Future<void> _switchTab(int newTab) async {
+    if (newTab == _activeTab) return;
+    screens[_activeTab].onLeave();
+    _activeTab = newTab;
+    screens[_activeTab].onEnter();
+    await screens[_activeTab].refresh();
   }
 
   void _render() {
-    terminal.clearScreen();
-    final w = terminal.width;
-    final h = terminal.height;
+    if (_rendering) return;
+    _rendering = true;
+    try {
+      final w = terminal.width;
+      final h = terminal.height;
 
-    // Header
-    final header = headerStyle().width(w).render(
-        ' Cake Wallet TUI');
+      // Header
+      final header = headerStyle().width(w).render(' Cake Wallet TUI');
 
-    // Tab bar
-    final tabs = screens.asMap().entries.map((e) {
-      final isActive = e.key == _activeTab;
-      final style = isActive
-          ? Style().bold(true).foreground(cakeText).background(cakePrimary).paddingLeft(1).paddingRight(1)
-          : Style().foreground(cakeMuted).paddingLeft(1).paddingRight(1);
-      final marker = isActive ? '> ' : '  ';
-      return style.render('$marker${e.value.title}');
-    }).toList();
-    final tabBar = joinHorizontal(posTop, tabs);
+      // Tab bar
+      final tabs = screens.asMap().entries.map((e) {
+        final isActive = e.key == _activeTab;
+        final style = isActive
+            ? Style()
+                .bold(true)
+                .foreground(cakeText)
+                .background(cakePrimary)
+                .paddingLeft(1)
+                .paddingRight(1)
+            : Style().foreground(cakeMuted).paddingLeft(1).paddingRight(1);
+        final marker = isActive ? '> ' : '  ';
+        return style.render('$marker${e.value.title}');
+      }).toList();
+      final tabBar = joinHorizontal(posTop, tabs);
 
-    // Screen content
-    final content = screens[_activeTab].render(w, h - 4, commandBus);
+      // Screen content
+      final content = screens[_activeTab].render(w, h - 4, commandBus);
 
-    // Status bar
-    final statusBar = mutedStyle().width(w).render(
-        ' Tab: switch  q: quit  Up/Down: navigate  Enter: select  Esc: back');
+      // Status bar
+      final statusBar = mutedStyle().width(w).render(
+          ' Tab: switch  q: quit  Ctrl+C: force quit  Up/Down: navigate  Enter: select');
 
-    final output = joinVertical(posLeft, [header, tabBar, content, statusBar]);
-    stdout.write(output);
+      final output =
+          joinVertical(posLeft, [header, tabBar, content, statusBar]);
+
+      // Flicker-free rendering: cursor home + write + clear remainder
+      stdout.write('\x1B[H');
+      stdout.write(output);
+      stdout.write('\x1B[J');
+    } catch (e) {
+      terminal.clearScreen();
+      stdout.write('Render error: $e\nPress Ctrl+C to quit.');
+    } finally {
+      _rendering = false;
+    }
   }
 
   void _cleanup() {
+    _refreshTimer?.cancel();
     _eventSub?.cancel();
     terminal.exitAlternateScreen();
     terminal.showCursor();

@@ -25,7 +25,7 @@ class ListWalletsCommand extends WalletCommand<List<WalletSummary>> {
     }
     final List<WalletInfo> wallets;
     try {
-      wallets = (await ctx.listWalletInfos!()).cast<WalletInfo>();
+      wallets = (await ctx.listWalletInfos!()).whereType<WalletInfo>().toList();
     } on TypeError catch (e) {
       return CommandResult.error('TYPE_ERROR',
           message: 'listWalletInfos returned unexpected type: $e');
@@ -65,10 +65,18 @@ class GetBalanceCommand extends WalletCommand<BalanceSnapshot> {
       return CommandResult.error('NO_BALANCE', message: 'No balance available');
     }
     final primaryBalance = balanceMap.values.first;
+    // Not all wallet Balance implementations have a `frozen` getter
+    final frozen = (() {
+      try {
+        return (primaryBalance as dynamic).frozen ?? BigInt.zero;
+      } catch (_) {
+        return BigInt.zero;
+      }
+    })();
     return CommandResult.ok(BalanceSnapshot(
       available: primaryBalance.available.toString(),
       pending: primaryBalance.additional.toString(),
-      frozen: (primaryBalance.frozen ?? BigInt.zero).toString(),
+      frozen: frozen.toString(),
       currencyTitle: wallet.currency.title,
     ));
   }
