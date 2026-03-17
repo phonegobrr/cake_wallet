@@ -47,16 +47,54 @@ class AddContactCommand extends WalletCommand<AddressEntry> {
     CakeRuntimeContext ctx,
     Map<String, dynamic> params,
   ) async {
-    final name = params['name'] as String;
-    final address = params['address'] as String;
-    final currency = params['currency'] as String?;
+    final contactName = params['name']?.toString() ?? '';
+    final address = params['address']?.toString() ?? '';
+    final currency = params['currency']?.toString();
 
-    ctx.logger.info('Adding contact: $name ($address)');
+    if (ctx.addContact == null) {
+      return CommandResult.error('SERVICE_UNAVAILABLE',
+          message: 'Contact persistence not configured in this runtime');
+    }
 
-    return CommandResult.ok(AddressEntry(
-      address: address,
-      label: name,
-      currencyTitle: currency,
-    ), message: ctx.strings.contactAdded);
+    try {
+      final entry = await ctx.addContact!(contactName, address, currency);
+      return CommandResult.ok(entry, message: ctx.strings.contactAdded);
+    } catch (e) {
+      return CommandResult.error('CONTACT_ADD_FAILED', message: e.toString());
+    }
+  }
+}
+
+class DeleteContactCommand extends WalletCommand<Map<String, String>> {
+  @override
+  String get name => 'contacts.delete';
+  @override
+  String get description => 'Delete a contact by name';
+  @override
+  Map<String, CommandArg> get args => {
+        'name': CommandArg(
+            name: 'name', description: 'Contact name', required: true),
+      };
+
+  @override
+  Future<CommandResult<Map<String, String>>> execute(
+    CakeRuntimeContext ctx,
+    Map<String, dynamic> params,
+  ) async {
+    if (ctx.deleteContact == null) {
+      return CommandResult.error('SERVICE_UNAVAILABLE',
+          message: 'Contact management not configured in this runtime');
+    }
+    final contactName = params['name']?.toString() ?? '';
+    try {
+      await ctx.deleteContact!(contactName);
+      return CommandResult.ok(
+        {'deleted': contactName},
+        message: 'Contact "$contactName" deleted',
+      );
+    } catch (e) {
+      return CommandResult.error('CONTACT_DELETE_FAILED',
+          message: e.toString());
+    }
   }
 }

@@ -2,7 +2,6 @@ import 'package:cake_headless/commands/command.dart';
 import 'package:cake_headless/commands/command_result.dart';
 import 'package:cake_headless/dto/send_result.dart';
 import 'package:cake_headless/runtime_context.dart';
-import 'package:cw_core/wallet_base.dart';
 
 class SendCommand extends WalletCommand<SendResult> {
   @override
@@ -36,23 +35,28 @@ class SendCommand extends WalletCommand<SendResult> {
 
     final address = params['address']?.toString() ?? '';
     final amount = params['amount']?.toString() ?? '';
+    final priority = params['priority']?.toString();
+
+    if (address.isEmpty || amount.isEmpty) {
+      return CommandResult.error('INVALID_ARGS',
+          message: 'Address and amount are required');
+    }
 
     ctx.logger.info(
         'Preparing transaction: $amount ${wallet.currency.title} -> $address');
 
-    // Transaction creation requires wallet-type-specific credential building.
-    // The actual implementation will be wired through a send service that
-    // creates credentials, calls wallet.createTransaction(), and commits.
-    // For now, return the validated parameters as a preview.
-    return CommandResult.ok(
-      SendResult(
-        txHash: '',
-        amount: amount,
-        address: address,
-        fee: '0',
-      ),
-      message: 'Send command received — full transaction creation '
-          'requires wallet-type-specific credential building',
-    );
+    if (ctx.sendTransaction != null) {
+      try {
+        final result = await ctx.sendTransaction!(address, amount,
+            priority: priority);
+        return CommandResult.ok(result,
+            message: 'Transaction sent: ${result.txHash}');
+      } catch (e) {
+        return CommandResult.error('SEND_FAILED', message: e.toString());
+      }
+    }
+
+    return CommandResult.error('SERVICE_UNAVAILABLE',
+        message: 'Send service not configured in this runtime');
   }
 }

@@ -59,6 +59,22 @@ class CakeRuntimeContext {
   /// Callback to check exchange trade status by trade ID.
   Future<SwapStatus> Function(String tradeId)? getSwapStatus;
 
+  /// Callback to add a node. Returns the created NodeInfo.
+  Future<NodeInfo> Function(String uri, String name, bool trusted)? addNode;
+
+  /// Callback to select a node by URI.
+  Future<NodeInfo> Function(String uri)? selectNode;
+
+  /// Callback to delete a node by URI.
+  Future<void> Function(String uri)? deleteNode;
+
+  /// Callback to add a contact. Returns the created AddressEntry.
+  Future<AddressEntry> Function(
+      String name, String address, String? currency)? addContact;
+
+  /// Callback to delete a contact by name.
+  Future<void> Function(String name)? deleteContact;
+
   /// Callback to export an encrypted backup to the given path.
   Future<BackupResult> Function(String outputPath)? exportBackup;
 

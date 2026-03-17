@@ -38,6 +38,32 @@ class ListSettingsCommand extends WalletCommand<Map<String, String>> {
   }
 }
 
+class GetSettingCommand extends WalletCommand<Map<String, String>> {
+  @override
+  String get name => 'settings.get';
+  @override
+  String get description => 'Get a single setting value';
+  @override
+  Map<String, CommandArg> get args => {
+        'key': CommandArg(
+            name: 'key', description: 'Setting key', required: true),
+      };
+
+  @override
+  Future<CommandResult<Map<String, String>>> execute(
+    CakeRuntimeContext ctx,
+    Map<String, dynamic> params,
+  ) async {
+    final key = params['key']?.toString() ?? '';
+    final val = await ctx.settings.getString(key);
+    if (val == null) {
+      return CommandResult.error('NOT_FOUND',
+          message: 'Setting "$key" not found');
+    }
+    return CommandResult.ok({key: val});
+  }
+}
+
 class SetSettingCommand extends WalletCommand<Map<String, String>> {
   @override
   String get name => 'settings.set';
