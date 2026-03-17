@@ -103,6 +103,112 @@ class GenerateNewAddressCommand extends WalletCommand<AddressEntry> {
   }
 }
 
+class RotateAddressCommand extends WalletCommand<AddressEntry> {
+  @override
+  String get name => 'receive.rotate';
+  @override
+  String get description => 'Rotate to the next unused receive address';
+  @override
+  Map<String, CommandArg> get args => {};
+
+  @override
+  Future<CommandResult<AddressEntry>> execute(
+    CakeRuntimeContext ctx,
+    Map<String, dynamic> params,
+  ) async {
+    if (!ctx.hasWallet) {
+      return CommandResult.error('NO_WALLET', message: ctx.strings.noWalletOpen);
+    }
+    // Address rotation is wallet-type specific (subaddress vs new key)
+    // For wallets that support it, the primary address getter already
+    // returns the current unused subaddress
+    final wallet = ctx.wallet!;
+    final address = wallet.walletAddresses.address;
+    return CommandResult.ok(
+      AddressEntry(
+        address: address,
+        label: 'Current',
+        currencyTitle: wallet.currency.title,
+      ),
+      message: 'Current receive address (rotation requires wallet-type-specific logic)',
+    );
+  }
+}
+
+class LabelAddressCommand extends WalletCommand<Map<String, String>> {
+  @override
+  String get name => 'receive.label';
+  @override
+  String get description => 'Set a label on a receive address';
+  @override
+  Map<String, CommandArg> get args => {
+        'address': CommandArg(
+            name: 'address', description: 'Address to label', required: true),
+        'label': CommandArg(
+            name: 'label', description: 'Label text', required: true),
+      };
+
+  @override
+  Future<CommandResult<Map<String, String>>> execute(
+    CakeRuntimeContext ctx,
+    Map<String, dynamic> params,
+  ) async {
+    if (!ctx.hasWallet) {
+      return CommandResult.error('NO_WALLET', message: ctx.strings.noWalletOpen);
+    }
+    return CommandResult.error('SERVICE_UNAVAILABLE',
+        message: 'Address labeling requires wallet-type-specific subaddress management');
+  }
+}
+
+class HideAddressCommand extends WalletCommand<Map<String, String>> {
+  @override
+  String get name => 'receive.hide';
+  @override
+  String get description => 'Hide a receive address from the list';
+  @override
+  Map<String, CommandArg> get args => {
+        'address': CommandArg(
+            name: 'address', description: 'Address to hide', required: true),
+      };
+
+  @override
+  Future<CommandResult<Map<String, String>>> execute(
+    CakeRuntimeContext ctx,
+    Map<String, dynamic> params,
+  ) async {
+    if (!ctx.hasWallet) {
+      return CommandResult.error('NO_WALLET', message: ctx.strings.noWalletOpen);
+    }
+    return CommandResult.error('SERVICE_UNAVAILABLE',
+        message: 'Address visibility requires wallet-type-specific subaddress management');
+  }
+}
+
+class UnhideAddressCommand extends WalletCommand<Map<String, String>> {
+  @override
+  String get name => 'receive.unhide';
+  @override
+  String get description => 'Unhide a hidden receive address';
+  @override
+  Map<String, CommandArg> get args => {
+        'address': CommandArg(
+            name: 'address', description: 'Address to unhide', required: true),
+      };
+
+  @override
+  Future<CommandResult<Map<String, String>>> execute(
+    CakeRuntimeContext ctx,
+    Map<String, dynamic> params,
+  ) async {
+    if (!ctx.hasWallet) {
+      return CommandResult.error('NO_WALLET', message: ctx.strings.noWalletOpen);
+    }
+    return CommandResult.error('SERVICE_UNAVAILABLE',
+        message: 'Address visibility requires wallet-type-specific subaddress management');
+  }
+}
+
 class GetReceiveUriCommand extends WalletCommand<Map<String, String>> {
   @override
   String get name => 'receive.uri';

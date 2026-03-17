@@ -505,3 +505,92 @@ class RenameWalletCommand extends WalletCommand<Map<String, String>> {
     }
   }
 }
+
+class RestoreWalletKeysCommand extends WalletCommand<Map<String, String>> {
+  @override
+  String get name => 'wallet.restore.keys';
+  @override
+  String get description => 'Restore wallet from private keys';
+  @override
+  Map<String, CommandArg> get args => {
+        'name': CommandArg(
+            name: 'name', description: 'Wallet name', required: true),
+        'type': CommandArg(
+            name: 'type',
+            description: 'Wallet type index',
+            type: int,
+            required: true),
+      };
+
+  @override
+  bool get isSafeForNonInteractive => false;
+
+  @override
+  Future<CommandResult<Map<String, String>>> execute(
+    CakeRuntimeContext ctx,
+    Map<String, dynamic> params,
+  ) async {
+    // Key-based restore requires wallet-type-specific key formats
+    // (e.g. Monero: spendKey+viewKey+address, Bitcoin: WIF, etc.)
+    // This must be wired through a wallet-type-specific callback
+    return CommandResult.error('SERVICE_UNAVAILABLE',
+        message: 'Key-based restore requires wallet-type-specific key format handling. '
+            'Use wallet.restore.seed for seed-based restore.');
+  }
+}
+
+class SyncStartCommand extends WalletCommand<Map<String, String>> {
+  @override
+  String get name => 'wallet.sync.start';
+  @override
+  String get description => 'Start wallet synchronization';
+  @override
+  Map<String, CommandArg> get args => {};
+
+  @override
+  Future<CommandResult<Map<String, String>>> execute(
+    CakeRuntimeContext ctx,
+    Map<String, dynamic> params,
+  ) async {
+    if (!ctx.hasWallet) {
+      return CommandResult.error('NO_WALLET', message: ctx.strings.noWalletOpen);
+    }
+    try {
+      await ctx.wallet!.startSync();
+      return CommandResult.ok(
+        {'status': 'syncing'},
+        message: 'Synchronization started',
+      );
+    } catch (e) {
+      return CommandResult.error('SYNC_START_FAILED', message: e.toString());
+    }
+  }
+}
+
+class SyncStopCommand extends WalletCommand<Map<String, String>> {
+  @override
+  String get name => 'wallet.sync.stop';
+  @override
+  String get description => 'Stop wallet synchronization';
+  @override
+  Map<String, CommandArg> get args => {};
+
+  @override
+  Future<CommandResult<Map<String, String>>> execute(
+    CakeRuntimeContext ctx,
+    Map<String, dynamic> params,
+  ) async {
+    if (!ctx.hasWallet) {
+      return CommandResult.error('NO_WALLET', message: ctx.strings.noWalletOpen);
+    }
+    try {
+      ctx.wallet!.close(shouldCleanup: false);
+      return CommandResult.ok(
+        {'status': 'stopped'},
+        message: 'Synchronization stopped',
+      );
+    } catch (e) {
+      return CommandResult.error('SYNC_STOP_FAILED', message: e.toString());
+    }
+  }
+}

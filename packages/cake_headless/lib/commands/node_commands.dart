@@ -143,3 +143,21 @@ class DeleteNodeCommand extends WalletCommand<Map<String, String>> {
     }
   }
 }
+
+class ResetNodesCommand extends WalletCommand<Map<String, String>> {
+  @override
+  String get name => 'nodes.reset';
+  @override
+  String get description => 'Reset nodes to defaults for the current wallet type';
+  @override
+  Map<String, CommandArg> get args => {};
+
+  @override
+  Future<CommandResult<Map<String, String>>> execute(
+    CakeRuntimeContext ctx,
+    Map<String, dynamic> params,
+  ) async {
+    return CommandResult.error('SERVICE_UNAVAILABLE',
+        message: 'Node reset requires wallet-type-specific default node list');
+  }
+}

@@ -128,3 +128,44 @@ class GetSwapStatusCommand extends WalletCommand<SwapStatus> {
     }
   }
 }
+
+class SwapProvidersCommand extends WalletCommand<List<Map<String, String>>> {
+  @override
+  String get name => 'swap.providers';
+  @override
+  String get description => 'List available exchange providers';
+  @override
+  Map<String, CommandArg> get args => {};
+
+  @override
+  Future<CommandResult<List<Map<String, String>>>> execute(
+    CakeRuntimeContext ctx,
+    Map<String, dynamic> params,
+  ) async {
+    return CommandResult.error('SERVICE_UNAVAILABLE',
+        message: 'Exchange provider listing requires provider registration');
+  }
+}
+
+class SwapCancelCommand extends WalletCommand<Map<String, String>> {
+  @override
+  String get name => 'swap.cancel';
+  @override
+  String get description => 'Cancel a pending exchange trade';
+  @override
+  Map<String, CommandArg> get args => {
+        'trade-id': CommandArg(
+            name: 'trade-id',
+            description: 'Trade ID to cancel',
+            required: true),
+      };
+
+  @override
+  Future<CommandResult<Map<String, String>>> execute(
+    CakeRuntimeContext ctx,
+    Map<String, dynamic> params,
+  ) async {
+    return CommandResult.error('SERVICE_UNAVAILABLE',
+        message: 'Trade cancellation requires exchange provider integration');
+  }
+}

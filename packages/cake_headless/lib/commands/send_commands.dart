@@ -78,6 +78,60 @@ class SendMaxCommand extends WalletCommand<Map<String, String>> {
   }
 }
 
+class SendAllCommand extends WalletCommand<SendResult> {
+  @override
+  String get name => 'send.send-all';
+  @override
+  String get description => 'Send entire wallet balance to an address';
+  @override
+  Map<String, CommandArg> get args => {
+        'address': CommandArg(
+            name: 'address', description: 'Destination address', required: true),
+        'priority':
+            CommandArg(name: 'priority', description: 'Transaction priority'),
+      };
+
+  @override
+  bool get isSafeForNonInteractive => false;
+
+  @override
+  Future<CommandResult<SendResult>> execute(
+    CakeRuntimeContext ctx,
+    Map<String, dynamic> params,
+  ) async {
+    if (!ctx.hasWallet) {
+      return CommandResult.error('NO_WALLET', message: ctx.strings.noWalletOpen);
+    }
+    final address = params['address']?.toString() ?? '';
+    if (address.isEmpty) {
+      return CommandResult.error('INVALID_ARGS',
+          message: 'Address is required');
+    }
+
+    // Get max sendable amount
+    final balanceMap = ctx.wallet!.balance;
+    if (balanceMap.isEmpty) {
+      return CommandResult.error('NO_BALANCE', message: 'No balance available');
+    }
+    final maxAmount = balanceMap.values.first.available.toString();
+    final priority = params['priority']?.toString();
+
+    if (ctx.sendTransaction != null) {
+      try {
+        final result = await ctx.sendTransaction!(address, maxAmount,
+            priority: priority);
+        return CommandResult.ok(result,
+            message: 'Send-all transaction sent: ${result.txHash}');
+      } catch (e) {
+        return CommandResult.error('SEND_FAILED', message: e.toString());
+      }
+    }
+
+    return CommandResult.error('SERVICE_UNAVAILABLE',
+        message: 'Send service not configured in this runtime');
+  }
+}
+
 class SendCommand extends WalletCommand<SendResult> {
   @override
   String get name => 'send';
