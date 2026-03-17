@@ -3,8 +3,8 @@ import 'dart:io';
 
 import 'package:cake_headless/commands/command_result.dart';
 
-/// Serializes any DTO or value to a JSON-friendly structure.
-dynamic serializeData(dynamic data) {
+/// Serializes any DTO or value to a JSON-friendly map.
+Map<String, dynamic> serializeData(dynamic data) {
   if (data == null) return {};
   if (data is Map<String, dynamic>) return data;
   if (data is Map) return Map<String, dynamic>.from(data);
