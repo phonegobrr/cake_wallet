@@ -15,7 +15,7 @@ dependencies:
   dart_lipgloss:
     git:
       url: https://github.com/phonegobrr/dart_lipgloss
-      ref: main
+      ref: 047d42d4e4514b2c691a908cb19a3cff8a42e65f
   args: ^2.5.0
   cw_core:
     path: ../../cw_core

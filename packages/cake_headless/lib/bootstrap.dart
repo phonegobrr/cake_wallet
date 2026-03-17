@@ -1,5 +1,6 @@
 import 'package:cake_headless/commands/command_bus.dart';
 import 'package:cake_headless/commands/wallet_commands.dart';
+import 'package:cake_headless/commands/send_commands.dart';
 import 'package:cake_headless/commands/receive_commands.dart';
 import 'package:cake_headless/commands/history_commands.dart';
 import 'package:cake_headless/commands/node_commands.dart';
@@ -21,6 +22,7 @@ Future<CommandBus> bootstrap(CakeRuntimeContext ctx) async {
   // Register all commands
   bus.register(ListWalletsCommand());
   bus.register(GetBalanceCommand());
+  bus.register(SendCommand());
   bus.register(GetReceiveAddressCommand());
   bus.register(ListTransactionsCommand());
   bus.register(ListNodesCommand());

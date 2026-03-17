@@ -49,5 +49,5 @@ jobs:
         working-directory: packages/cake_console
 
       - name: Verify binary compiles
-        run: dart compile exe bin/cake.dart -o build/cake || echo "dart compile exe failed (may need dart build cli for native assets); analysis passed"
+        run: dart build cli
         working-directory: packages/cake_console

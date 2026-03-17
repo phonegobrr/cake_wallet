@@ -51,6 +51,13 @@ Future<void> main(List<String> args) async {
       isJsonMode: () => _isJson(args),
     ))
     ..addCommand(HeadlessCliCommand(
+      name: 'send',
+      description: 'Send a transaction',
+      headlessCommand: 'send',
+      bus: bus,
+      isJsonMode: () => _isJson(args),
+    ))
+    ..addCommand(HeadlessCliCommand(
       name: 'receive',
       description: 'Show receive address',
       headlessCommand: 'receive.address',

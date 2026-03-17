@@ -164,7 +164,7 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: main
+      ref: "047d42d4e4514b2c691a908cb19a3cff8a42e65f"
       resolved-ref: "047d42d4e4514b2c691a908cb19a3cff8a42e65f"
       url: "https://github.com/phonegobrr/dart_lipgloss"
     source: git
