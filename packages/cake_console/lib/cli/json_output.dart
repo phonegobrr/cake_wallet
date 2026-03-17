@@ -3,13 +3,18 @@ import 'dart:io';
 
 import 'package:cake_headless/commands/command_result.dart';
 
-/// Serializes any DTO or value to a JSON-friendly map.
-Map<String, dynamic> _serializeData(dynamic data) {
+/// Serializes any DTO or value to a JSON-friendly structure.
+dynamic serializeData(dynamic data) {
+  if (data == null) return {};
+  if (data is Map<String, dynamic>) return data;
   if (data is Map) return Map<String, dynamic>.from(data);
   if (data is List) {
     return {
-      'items': data.map((e) => _serializeData(e)).toList(),
+      'items': data.map((e) => serializeData(e)).toList(),
     };
+  }
+  if (data is String || data is num || data is bool) {
+    return {'value': data};
   }
   try {
     final result = (data as dynamic).toJson();
@@ -22,7 +27,7 @@ Map<String, dynamic> _serializeData(dynamic data) {
 
 /// Renders a CommandResult as JSON to stdout.
 void outputJson(CommandResult result) {
-  final json = result.toJson((data) => _serializeData(data));
+  final json = result.toJson((data) => serializeData(data));
   stdout.writeln(jsonEncode(json));
 }
 

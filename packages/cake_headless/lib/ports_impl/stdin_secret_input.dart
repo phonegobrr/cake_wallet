@@ -19,11 +19,11 @@ class StdinUserInteraction implements UserInteractionPort {
   @override
   Future<String?> promptText(String message, {bool obscure = false}) async {
     stderr.write('$message: ');
-    if (obscure) {
+    if (obscure && stdin.hasTerminal) {
       stdin.echoMode = false;
     }
     final input = stdin.readLineSync();
-    if (obscure) {
+    if (obscure && stdin.hasTerminal) {
       stdin.echoMode = true;
       stderr.writeln();
     }

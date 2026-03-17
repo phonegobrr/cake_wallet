@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:args/command_runner.dart';
@@ -11,131 +12,36 @@ Future<void> main(List<String> args) async {
   final appDir = await pathProvider.getAppDir();
   final logger = StderrLogger();
 
+  final storageKey = await _getOrCreateEncryptionKey('$appDir/.storage_key');
+  final secureStorage = FileSecureStorage('$appDir/.secure_storage', storageKey);
+
+  final useYes = args.contains('--yes') || args.contains('-y');
+
+  // For MCP mode, don't use stdin-based interaction (stdin is JSON-RPC)
+  final isMcpMode = args.isNotEmpty && args[0] == 'mcp';
+  final UserInteractionPort interaction = isMcpMode
+      ? NoOpUserInteraction()
+      : StdinUserInteraction(autoConfirm: useYes);
+
   final ctx = CakeRuntimeContext(
-    secureStorage: FileSecureStorage(
-        '$appDir/.secure_storage', Uint8List(32)),
+    secureStorage: secureStorage,
     settings: JsonSettingsStore('$appDir/settings.json'),
     pathProvider: pathProvider,
     assetLoader: FilesystemAssetLoader('.'),
     logger: logger,
-    interaction: StdinUserInteraction(),
+    interaction: interaction,
   );
 
-  // Build command bus and register all commands
-  final bus = CommandBus(ctx);
-
-  // Wallet
-  bus.register(ListWalletsCommand());
-  bus.register(GetBalanceCommand());
-
-  // Send / Receive
-  bus.register(SendCommand());
-  bus.register(GetReceiveAddressCommand());
-
-  // History
-  bus.register(ListTransactionsCommand());
-
-  // Nodes
-  bus.register(ListNodesCommand());
-
-  // Settings & Sync
-  bus.register(ListSettingsCommand());
-  bus.register(SetSettingCommand());
-  bus.register(GetSyncStatusCommand());
-
-  // Exchange / Swap
-  bus.register(GetSwapQuoteCommand());
-  bus.register(GetSwapStatusCommand());
-
-  // Contacts
-  bus.register(ListContactsCommand());
-  bus.register(AddContactCommand());
-
-  // Backup
-  bus.register(ExportBackupCommand());
-  bus.register(ImportBackupCommand());
+  // Use bootstrap() to register all commands and acquire wallet lock
+  final bus = await bootstrap(ctx);
 
   // Build CLI runner
   final runner = CommandRunner<void>('cake', 'Cake Wallet CLI/TUI')
     ..addCommand(TuiCommand(bus, ctx.eventBus))
-    ..addCommand(McpCommand(bus))
-    ..addCommand(HeadlessCliCommand(
-      name: 'wallet',
-      description: 'Wallet operations (list)',
-      headlessCommand: 'wallet.list',
-      bus: bus,
-      isJsonMode: () => _isJson(args),
-    ))
-    ..addCommand(HeadlessCliCommand(
-      name: 'balance',
-      description: 'Show wallet balance',
-      headlessCommand: 'balance.get',
-      bus: bus,
-      isJsonMode: () => _isJson(args),
-    ))
-    ..addCommand(HeadlessCliCommand(
-      name: 'send',
-      description: 'Send a transaction',
-      headlessCommand: 'send',
-      bus: bus,
-      isJsonMode: () => _isJson(args),
-    ))
-    ..addCommand(HeadlessCliCommand(
-      name: 'receive',
-      description: 'Show receive address',
-      headlessCommand: 'receive.address',
-      bus: bus,
-      isJsonMode: () => _isJson(args),
-    ))
-    ..addCommand(HeadlessCliCommand(
-      name: 'history',
-      description: 'Show transaction history',
-      headlessCommand: 'history.list',
-      bus: bus,
-      isJsonMode: () => _isJson(args),
-    ))
-    ..addCommand(HeadlessCliCommand(
-      name: 'nodes',
-      description: 'Node management',
-      headlessCommand: 'nodes.list',
-      bus: bus,
-      isJsonMode: () => _isJson(args),
-    ))
-    ..addCommand(HeadlessCliCommand(
-      name: 'settings',
-      description: 'Settings management',
-      headlessCommand: 'settings.list',
-      bus: bus,
-      isJsonMode: () => _isJson(args),
-    ))
-    ..addCommand(HeadlessCliCommand(
-      name: 'sync-status',
-      description: 'Show sync status',
-      headlessCommand: 'sync.status',
-      bus: bus,
-      isJsonMode: () => _isJson(args),
-    ))
-    ..addCommand(HeadlessCliCommand(
-      name: 'swap',
-      description: 'Get exchange quote',
-      headlessCommand: 'swap.quote',
-      bus: bus,
-      isJsonMode: () => _isJson(args),
-    ))
-    ..addCommand(HeadlessCliCommand(
-      name: 'contacts',
-      description: 'Contact management',
-      headlessCommand: 'contacts.list',
-      bus: bus,
-      isJsonMode: () => _isJson(args),
-    ))
-    ..addCommand(HeadlessCliCommand(
-      name: 'backup',
-      description: 'Backup management',
-      headlessCommand: 'backup.export',
-      bus: bus,
-      isJsonMode: () => _isJson(args),
-    ));
+    ..addCommand(McpCommand(bus));
+
+  // Generate CLI subcommands from dotted command names
+  _registerCliSubcommands(runner, bus, args);
 
   // Global flags
   runner.argParser
@@ -145,9 +51,28 @@ Future<void> main(List<String> args) async {
     ..addFlag('no-color', help: 'Disable colors', negatable: false)
     ..addFlag('yes', abbr: 'y', help: 'Auto-confirm prompts', negatable: false);
 
-  // If no subcommand given, launch interactive TUI
+  // If no subcommand given, launch interactive TUI or show help
   if (args.isEmpty) {
-    args = ['tui'];
+    if (stdin.hasTerminal && stdout.hasTerminal) {
+      args = ['tui'];
+    } else {
+      stderr.writeln('No command specified. Run with --help for usage.');
+      exitCode = 64;
+      return;
+    }
+  }
+
+  // Graceful shutdown
+  final lock = WalletLock();
+  ProcessSignal.sigint.watch().listen((_) {
+    lock.release();
+    exit(0);
+  });
+  if (!Platform.isWindows) {
+    ProcessSignal.sigterm.watch().listen((_) {
+      lock.release();
+      exit(0);
+    });
   }
 
   try {
@@ -159,3 +84,91 @@ Future<void> main(List<String> args) async {
 }
 
 bool _isJson(List<String> args) => args.contains('--json');
+
+/// Generates encryption key or reads existing one from disk.
+Future<Uint8List> _getOrCreateEncryptionKey(String keyPath) async {
+  final keyFile = File(keyPath);
+  if (keyFile.existsSync()) {
+    return Uint8List.fromList(keyFile.readAsBytesSync());
+  }
+  final key = Uint8List.fromList(
+      List<int>.generate(32, (_) => Random.secure().nextInt(256)));
+  await keyFile.parent.create(recursive: true);
+  await keyFile.writeAsBytes(key);
+  // Restrict permissions on Unix
+  if (!Platform.isWindows) {
+    Process.runSync('chmod', ['600', keyPath]);
+  }
+  return key;
+}
+
+/// Registers CLI subcommands from dotted command names.
+/// e.g. "wallet.list" becomes `cake wallet list`,
+///      "balance.get" becomes `cake balance`.
+void _registerCliSubcommands(
+    CommandRunner runner, CommandBus bus, List<String> args) {
+  // Group commands by top-level prefix
+  final groups = <String, List<WalletCommand>>{};
+  for (final cmd in bus.commands) {
+    final parts = cmd.name.split('.');
+    final group = parts[0];
+    groups.putIfAbsent(group, () => []).add(cmd);
+  }
+
+  for (final entry in groups.entries) {
+    final group = entry.key;
+    final commands = entry.value;
+
+    if (commands.length == 1 && commands.first.name == group) {
+      // Single command, no dot — register directly
+      runner.addCommand(HeadlessCliCommand(
+        name: group,
+        description: commands.first.description,
+        headlessCommand: commands.first.name,
+        bus: bus,
+        isJsonMode: () => _isJson(args),
+      ));
+    } else if (commands.length == 1) {
+      // Single dotted command — register as flat command
+      final subName = commands.first.name.split('.').skip(1).join('-');
+      // Register both the group name pointing to the first subcommand
+      // and the flat name
+      try {
+        runner.addCommand(HeadlessCliCommand(
+          name: group,
+          description: '${group[0].toUpperCase()}${group.substring(1)} operations',
+          headlessCommand: commands.first.name,
+          bus: bus,
+          isJsonMode: () => _isJson(args),
+        ));
+      } catch (_) {
+        // Already registered
+      }
+    } else {
+      // Multiple commands in the group — create a compound command
+      runner.addCommand(CompoundCliCommand(
+        groupName: group,
+        groupDescription:
+            '${group[0].toUpperCase()}${group.substring(1)} operations',
+        commands: commands,
+        bus: bus,
+        isJsonMode: () => _isJson(args),
+      ));
+    }
+  }
+}
+
+/// No-op interaction port for MCP mode where stdin is reserved for JSON-RPC.
+class NoOpUserInteraction implements UserInteractionPort {
+  @override
+  Future<bool> confirm(String message) async => false;
+
+  @override
+  Future<String> promptText(String message, {bool obscure = false}) async =>
+      throw StateError(
+          'Interactive input not available in MCP mode. Use --yes flag or provide all arguments.');
+
+  @override
+  Future<int> pickOption(String message, List<String> options) async =>
+      throw StateError('Interactive input not available in MCP mode.');
+}

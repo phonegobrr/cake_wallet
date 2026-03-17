@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
+import 'package:cake_headless/commands/command.dart';
 import 'package:cake_headless/commands/command_bus.dart';
 import 'package:cake_headless/events/event_bus.dart';
 import 'package:cake_console/cli/json_output.dart';
@@ -87,10 +88,21 @@ class HeadlessCliCommand extends Command<void> {
 
   @override
   Future<void> run() async {
+    final cmd = _bus.getCommand(headlessCommand);
     final params = <String, dynamic>{};
     for (final option in argResults!.options) {
       if (argResults!.wasParsed(option)) {
-        params[option] = argResults![option];
+        var value = argResults![option];
+        // Coerce types based on command arg definitions
+        if (cmd != null && cmd.args.containsKey(option)) {
+          final argDef = cmd.args[option]!;
+          if (argDef.type == int && value is String) {
+            value = int.tryParse(value) ?? value;
+          } else if (argDef.type == double && value is String) {
+            value = double.tryParse(value) ?? value;
+          }
+        }
+        params[option] = value;
       }
     }
 
@@ -105,5 +117,46 @@ class HeadlessCliCommand extends Command<void> {
     if (!result.success) {
       exitCode = 1;
     }
+  }
+}
+
+/// Compound CLI command that groups multiple dotted commands under a prefix.
+/// e.g. "wallet.list", "wallet.create" → `cake wallet list`, `cake wallet create`
+class CompoundCliCommand extends Command<void> {
+  @override
+  final String name;
+  @override
+  final String description;
+
+  final CommandBus _bus;
+  final bool Function() _isJsonMode;
+
+  CompoundCliCommand({
+    required String groupName,
+    required String groupDescription,
+    required List<WalletCommand> commands,
+    required CommandBus bus,
+    required bool Function() isJsonMode,
+  })  : name = groupName,
+        description = groupDescription,
+        _bus = bus,
+        _isJsonMode = isJsonMode {
+    for (final cmd in commands) {
+      final parts = cmd.name.split('.');
+      final subName = parts.length > 1 ? parts.skip(1).join('-') : parts[0];
+      addSubcommand(HeadlessCliCommand(
+        name: subName,
+        description: cmd.description,
+        headlessCommand: cmd.name,
+        bus: bus,
+        isJsonMode: isJsonMode,
+      ));
+    }
+  }
+
+  @override
+  Future<void> run() async {
+    // If no subcommand is specified, show usage
+    printUsage();
   }
 }
