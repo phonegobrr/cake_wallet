@@ -1,0 +1,29 @@
+name: CLI/TUI Build & Test
+on: [push, pull_request]
+jobs:
+  build-test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - name: Get headless dependencies
+        run: dart pub get
+        working-directory: packages/cake_headless
+      - name: Run headless tests
+        run: dart test
+        working-directory: packages/cake_headless
+      - name: Get console dependencies
+        run: dart pub get
+        working-directory: packages/cake_console
+      - name: Run console tests
+        run: dart test
+        working-directory: packages/cake_console
+      - name: Analyze headless
+        run: dart analyze
+        working-directory: packages/cake_headless
+      - name: Analyze console
+        run: dart analyze
+        working-directory: packages/cake_console
