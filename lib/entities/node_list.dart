@@ -1,4 +1,4 @@
-import 'package:flutter/services.dart';
+import 'package:cw_core/generate_name.dart' show loadAssetString;
 import 'package:hive/hive.dart';
 import "package:yaml/yaml.dart";
 import 'package:cw_core/node.dart';
@@ -19,7 +19,6 @@ Future<List<Node>> loadDefaultNodes(WalletType type) async {
     case WalletType.haven:
       path = 'assets/haven_node_list.yml';
       break;
-    // TODO: (refactoring) each wallet would have its path, so `wallet.nodePath` would be decided based on chain id in Evm wallet
     case WalletType.ethereum:
       path = 'assets/ethereum_server_list.yml';
       break;
@@ -68,7 +67,7 @@ Future<List<Node>> loadDefaultNodes(WalletType type) async {
       break;
   }
 
-  final nodesRaw = await rootBundle.loadString(path);
+  final nodesRaw = await loadAssetString(path);
   final loadedNodes = loadYaml(nodesRaw) as YamlList;
   final nodes = <Node>[];
 
@@ -84,7 +83,7 @@ Future<List<Node>> loadDefaultNodes(WalletType type) async {
 }
 
 Future<List<Node>> loadDefaultNanoPowNodes() async {
-  final powNodesRaw = await rootBundle.loadString('assets/nano_pow_node_list.yml');
+  final powNodesRaw = await loadAssetString('assets/nano_pow_node_list.yml');
   final loadedPowNodes = loadYaml(powNodesRaw) as YamlList;
   final nodes = <Node>[];
 

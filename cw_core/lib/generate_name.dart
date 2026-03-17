@@ -15,7 +15,10 @@ AssetStringLoader? _assetLoader;
 
 void setAssetLoader(AssetStringLoader loader) => _assetLoader = loader;
 
-Future<String> _loadAsset(String path) async {
+/// Load an asset string using the configured loader, or filesystem fallback.
+/// Public so other packages (e.g. node_list.dart) can reuse the same
+/// asset-loading abstraction.
+Future<String> loadAssetString(String path) async {
   if (_assetLoader != null) return _assetLoader!(path);
   // Fallback: read from filesystem relative to executable
   final file = File(path);
@@ -29,8 +32,8 @@ Future<String> _loadAsset(String path) async {
 
 Future<String> generateName() async {
   final randomThing = Random();
-  final adjectiveStringRaw = await _loadAsset("assets/text/Wallet_Adjectives.txt");
-  final nounStringRaw = await _loadAsset("assets/text/Wallet_Nouns.txt");
+  final adjectiveStringRaw = await loadAssetString("assets/text/Wallet_Adjectives.txt");
+  final nounStringRaw = await loadAssetString("assets/text/Wallet_Nouns.txt");
 
   final ls = LineSplitter();
   final adjectives = ls.convert(adjectiveStringRaw);
