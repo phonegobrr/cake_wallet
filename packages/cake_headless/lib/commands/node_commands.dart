@@ -78,7 +78,6 @@ class TestNodeCommand extends WalletCommand<Map<String, dynamic>> {
     CakeRuntimeContext ctx,
     Map<String, dynamic> params,
   ) async {
-    final uri = params['uri']?.toString() ?? '';
     return CommandResult.error('SERVICE_UNAVAILABLE',
         message: 'Node testing requires wallet-type-specific connection logic');
   }

@@ -3,7 +3,7 @@ import 'package:cake_headless/commands/command_result.dart';
 import 'package:cake_headless/dto/transaction_summary.dart';
 import 'package:cake_headless/runtime_context.dart';
 import 'package:cw_core/transaction_direction.dart';
-import 'package:cw_core/wallet_base.dart';
+
 
 class GetTransactionDetailsCommand extends WalletCommand<TransactionSummary> {
   @override

@@ -3,7 +3,7 @@ import 'package:cake_headless/commands/command_result.dart';
 import 'package:cake_headless/dto/sync_status_summary.dart';
 import 'package:cake_headless/runtime_context.dart';
 import 'package:cw_core/sync_status.dart';
-import 'package:cw_core/wallet_base.dart';
+
 
 class ListSettingsCommand extends WalletCommand<Map<String, String>> {
   @override
