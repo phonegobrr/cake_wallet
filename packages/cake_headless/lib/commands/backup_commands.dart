@@ -26,12 +26,17 @@ class ExportBackupCommand extends WalletCommand<BackupResult> {
   ) async {
     final output = params['output'] as String;
 
-    ctx.logger.info('Exporting backup to: $output');
+    if (ctx.exportBackup == null) {
+      return CommandResult.error('SERVICE_UNAVAILABLE',
+          message: 'Backup service not configured in this runtime');
+    }
 
-    // Backup export requires BackupServiceV3 which depends on full DI.
-    // Return structured error until backup service is wired.
-    return CommandResult.error('NOT_IMPLEMENTED',
-        message: 'Backup export requires BackupServiceV3 integration');
+    try {
+      final result = await ctx.exportBackup!(output);
+      return CommandResult.ok(result);
+    } catch (e) {
+      return CommandResult.error('BACKUP_EXPORT_FAILED', message: e.toString());
+    }
   }
 }
 
@@ -58,9 +63,16 @@ class ImportBackupCommand extends WalletCommand<BackupResult> {
   ) async {
     final input = params['input'] as String;
 
-    ctx.logger.info('Importing backup from: $input');
+    if (ctx.importBackup == null) {
+      return CommandResult.error('SERVICE_UNAVAILABLE',
+          message: 'Backup service not configured in this runtime');
+    }
 
-    return CommandResult.error('NOT_IMPLEMENTED',
-        message: 'Backup import requires BackupServiceV3 integration');
+    try {
+      final result = await ctx.importBackup!(input);
+      return CommandResult.ok(result);
+    } catch (e) {
+      return CommandResult.error('BACKUP_IMPORT_FAILED', message: e.toString());
+    }
   }
 }

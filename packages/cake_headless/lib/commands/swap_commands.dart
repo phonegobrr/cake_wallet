@@ -34,12 +34,17 @@ class GetSwapQuoteCommand extends WalletCommand<SwapQuote> {
     final to = params['to'] as String;
     final amount = params['amount'] as String;
 
-    ctx.logger.info('Getting swap quote: $amount $from -> $to');
+    if (ctx.getSwapQuote == null) {
+      return CommandResult.error('SERVICE_UNAVAILABLE',
+          message: 'Exchange provider not configured in this runtime');
+    }
 
-    // Exchange provider integration requires wallet-specific exchange services.
-    // Return structured error until exchange providers are wired.
-    return CommandResult.error('NOT_IMPLEMENTED',
-        message: 'Exchange quote requires exchange provider integration');
+    try {
+      final quote = await ctx.getSwapQuote!(from, to, amount);
+      return CommandResult.ok(quote);
+    } catch (e) {
+      return CommandResult.error('SWAP_QUOTE_FAILED', message: e.toString());
+    }
   }
 }
 
@@ -63,9 +68,16 @@ class GetSwapStatusCommand extends WalletCommand<SwapStatus> {
   ) async {
     final tradeId = params['trade-id'] as String;
 
-    ctx.logger.info('Checking swap status for trade: $tradeId');
+    if (ctx.getSwapStatus == null) {
+      return CommandResult.error('SERVICE_UNAVAILABLE',
+          message: 'Exchange provider not configured in this runtime');
+    }
 
-    return CommandResult.error('NOT_IMPLEMENTED',
-        message: 'Swap status tracking requires exchange provider integration');
+    try {
+      final status = await ctx.getSwapStatus!(tradeId);
+      return CommandResult.ok(status);
+    } catch (e) {
+      return CommandResult.error('SWAP_STATUS_FAILED', message: e.toString());
+    }
   }
 }

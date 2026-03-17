@@ -1,5 +1,8 @@
 import 'package:cake_headless/dto/address_entry.dart';
+import 'package:cake_headless/dto/backup_result.dart';
 import 'package:cake_headless/dto/node_info.dart';
+import 'package:cake_headless/dto/swap_quote.dart';
+import 'package:cake_headless/dto/swap_status.dart';
 import 'package:cake_headless/ports/secure_storage_port.dart';
 import 'package:cake_headless/ports/settings_store_port.dart';
 import 'package:cake_headless/ports/path_provider_port.dart';
@@ -43,6 +46,19 @@ class CakeRuntimeContext {
 
   /// Callback to list contacts as DTOs.
   Future<List<AddressEntry>> Function()? listContacts;
+
+  /// Callback to get an exchange quote. Wired to exchange providers when
+  /// full DI is available.
+  Future<SwapQuote> Function(String from, String to, String amount)? getSwapQuote;
+
+  /// Callback to check exchange trade status by trade ID.
+  Future<SwapStatus> Function(String tradeId)? getSwapStatus;
+
+  /// Callback to export an encrypted backup to the given path.
+  Future<BackupResult> Function(String outputPath)? exportBackup;
+
+  /// Callback to import an encrypted backup from the given path.
+  Future<BackupResult> Function(String inputPath)? importBackup;
 
   CakeRuntimeContext({
     required this.secureStorage,
