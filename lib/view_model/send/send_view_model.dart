@@ -938,6 +938,7 @@ abstract class SendViewModelBase extends WalletChangeListenerViewModel with Stor
 
   /// Headless transaction commit — no BuildContext, no UR QR navigation.
   /// Directly commits the pending transaction without UI interaction.
+  /// Matches the UI path for: commit, transaction description, balance/history update.
   @action
   Future<void> commitTransactionHeadless() async {
     if (pendingTransaction == null) {
@@ -948,8 +949,29 @@ abstract class SendViewModelBase extends WalletChangeListenerViewModel with Stor
       state = TransactionCommitting();
       await pendingTransaction!.commit();
       state = TransactionCommitted();
+
+      // Save transaction description (parity with UI path)
+      if (pendingTransaction!.id.isNotEmpty) {
+        _addTransactionDescription();
+      }
+
+      // Schedule balance/history update (parity with UI path)
+      Future.delayed(Duration(seconds: 4), () async {
+        try {
+          await Future.wait([
+            wallet.updateTransactionsHistory(),
+            wallet.updateBalance() as Future<void>,
+          ]);
+        } catch (_) {}
+      });
+
+      final sharedPreferences = await SharedPreferences.getInstance();
+      await sharedPreferences.setString(
+          PreferencesKey.backgroundSyncLastTrigger(wallet.name),
+          DateTime.now().add(Duration(minutes: 1)).toIso8601String());
     } catch (e) {
-      state = FailureState(e.toString());
+      state = FailureState(translateErrorMessage(e, wallet.type, wallet.currency));
+      rethrow;
     }
   }
 
