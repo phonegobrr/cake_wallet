@@ -25,10 +25,10 @@ class ListWalletsCommand extends WalletCommand<List<WalletSummary>> {
     }
     final List<WalletInfo> wallets;
     try {
-      wallets = (await ctx.listWalletInfos!()).whereType<WalletInfo>().toList();
-    } on TypeError catch (e) {
+      wallets = await ctx.listWalletInfos!();
+    } catch (e) {
       return CommandResult.error('TYPE_ERROR',
-          message: 'listWalletInfos returned unexpected type: $e');
+          message: 'Failed to list wallets: $e');
     }
     final activeWallet = ctx.wallet;
     return CommandResult.ok(wallets
