@@ -30,8 +30,6 @@ class CryptoCurrency extends EnumerableItem<int> with Serializable<int> implemen
   final bool enabled;
   final bool isPotentialScam;
 
-  set enabled(bool value) => this.enabled = value;
-
   static const all = [
     CryptoCurrency.xmr,
     CryptoCurrency.btc,

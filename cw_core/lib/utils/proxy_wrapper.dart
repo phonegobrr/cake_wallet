@@ -61,7 +61,7 @@ class ProxyWrapper {
     if (!internal) {
       logger?.log(
         uri: null,
-        method: RequestMethod.newProxySocket,
+        method: RequestMethod.newHttpClient,
         body: Uint8List(0),
         response: null,
         network: requestNetwork(),
@@ -136,7 +136,7 @@ class ProxyWrapper {
     } finally {
       logger?.log(
         uri: uri,
-        method: RequestMethod.get,
+        method: method,
         body: utf8.encode(body ?? ''),
         response: resp,
         network: requestNetwork(),

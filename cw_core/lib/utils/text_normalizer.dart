@@ -61,7 +61,9 @@ List<int> combiningcodepoints() {
     return int.parse(e, radix: 16);
   }).fold(<int>[], (List<int> acc, element) {
     if (element is List) {
-      for (var i = element[0] as int; i <= (element[1] as int); i++) {}
+      for (var i = element[0] as int; i <= (element[1] as int); i++) {
+        acc.add(i);
+      }
     } else if (element is int) {
       acc.add(element);
     }
