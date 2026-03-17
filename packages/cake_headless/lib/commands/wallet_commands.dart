@@ -23,8 +23,14 @@ class ListWalletsCommand extends WalletCommand<List<WalletSummary>> {
       return CommandResult.ok(<WalletSummary>[],
           message: 'Wallet services not initialized');
     }
-    final wallets = (await ctx.listWalletInfos!()).cast<WalletInfo>();
-    final activeWallet = ctx.wallet as WalletBase?;
+    final List<WalletInfo> wallets;
+    try {
+      wallets = (await ctx.listWalletInfos!()).cast<WalletInfo>();
+    } on TypeError catch (e) {
+      return CommandResult.error('TYPE_ERROR',
+          message: 'listWalletInfos returned unexpected type: $e');
+    }
+    final activeWallet = ctx.wallet is WalletBase ? ctx.wallet as WalletBase : null;
     return CommandResult.ok(wallets
         .map((w) => WalletSummary(
               name: w.name,
@@ -50,10 +56,10 @@ class GetBalanceCommand extends WalletCommand<BalanceSnapshot> {
     CakeRuntimeContext ctx,
     Map<String, dynamic> params,
   ) async {
-    final wallet = ctx.wallet as WalletBase?;
-    if (wallet == null) {
+    if (ctx.wallet == null || ctx.wallet is! WalletBase) {
       return CommandResult.error('NO_WALLET', message: ctx.strings.noWalletOpen);
     }
+    final wallet = ctx.wallet as WalletBase;
     final balanceMap = wallet.balance;
     if (balanceMap.isEmpty) {
       return CommandResult.error('NO_BALANCE', message: 'No balance available');

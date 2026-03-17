@@ -17,10 +17,10 @@ class GetReceiveAddressCommand extends WalletCommand<AddressEntry> {
     CakeRuntimeContext ctx,
     Map<String, dynamic> params,
   ) async {
-    final wallet = ctx.wallet as WalletBase?;
-    if (wallet == null) {
+    if (ctx.wallet == null || ctx.wallet is! WalletBase) {
       return CommandResult.error('NO_WALLET', message: ctx.strings.noWalletOpen);
     }
+    final wallet = ctx.wallet as WalletBase;
 
     final address = wallet.walletAddresses.address;
     return CommandResult.ok(AddressEntry(

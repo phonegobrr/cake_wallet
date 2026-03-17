@@ -38,9 +38,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 Future<void> initializeHeadless({
   required String dataDir,
   required SecureStorage secureStorage,
-  GetIt? getItInstance,
 }) async {
-  final di = getItInstance ?? GetIt.instance;
+  final di = GetIt.instance;
   setRootDirOverride(dataDir);
 
   // Initialize Hive
@@ -133,6 +132,7 @@ Future<void> initializeHeadless({
     secureStorage: secureStorage,
     settingsStore: settingsStore,
     themeStore: themeStore,
+    sharedPreferences: sharedPreferences,
   );
 }
 
