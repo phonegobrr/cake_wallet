@@ -58,19 +58,14 @@ Future<void> setupCore({
   required SecureStorage secureStorage,
   required SettingsStore settingsStore,
   required ThemeStore themeStore,
-  SharedPreferences? sharedPreferences,
+  required SharedPreferences sharedPreferences,
 }) async {
   if (!getIt.isRegistered<SecureStorage>()) {
     getIt.registerSingleton<SecureStorage>(secureStorage);
   }
 
   if (!getIt.isRegistered<SharedPreferences>()) {
-    if (sharedPreferences != null) {
-      getIt.registerSingleton<SharedPreferences>(sharedPreferences);
-    } else {
-      getIt.registerSingletonAsync<SharedPreferences>(
-          () => SharedPreferences.getInstance());
-    }
+    getIt.registerSingleton<SharedPreferences>(sharedPreferences);
   }
 
   if (!getIt.isRegistered<ThemeStore>()) {
