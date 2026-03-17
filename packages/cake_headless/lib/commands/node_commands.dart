@@ -177,8 +177,15 @@ class EditNodeCommand extends WalletCommand<NodeInfo> {
     final trusted = params['trusted'] == true || params['trusted'] == 'true';
 
     try {
-      await ctx.deleteNode!(uri);
+      // Add replacement first, then delete old — prevents data loss if add fails
       final node = await ctx.addNode!(newUri, nodeName, trusted);
+      if (newUri != uri) {
+        try {
+          await ctx.deleteNode!(uri);
+        } catch (_) {
+          // Old node removal is best-effort; the new node is already added
+        }
+      }
       return CommandResult.ok(node, message: 'Node updated: $newUri');
     } catch (e) {
       return CommandResult.error('NODE_EDIT_FAILED', message: e.toString());
