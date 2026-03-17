@@ -189,9 +189,13 @@ class TuiApp {
           joinVertical(posLeft, [header, tabBar, content, statusBar]);
 
       // Flicker-free rendering: cursor home + write + clear remainder
-      stdout.write('\x1B[H');
-      stdout.write(output);
-      stdout.write('\x1B[J');
+      if (terminal.supportsAnsi) {
+        stdout.write('\x1B[H');
+        stdout.write(output);
+        stdout.write('\x1B[J');
+      } else {
+        stdout.writeln(output);
+      }
     } catch (e) {
       terminal.clearScreen();
       stdout.write('Render error: $e\nPress Ctrl+C to quit.');

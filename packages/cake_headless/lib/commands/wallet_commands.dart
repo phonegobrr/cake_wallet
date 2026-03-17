@@ -152,12 +152,19 @@ class CloseWalletCommand extends WalletCommand<Map<String, String>> {
     final name = ctx.wallet!.walletInfo.name;
     try {
       await ctx.wallet!.close(shouldCleanup: false);
-    } catch (_) {}
-    ctx.wallet = null;
-    return CommandResult.ok(
-      {'closed': name},
-      message: 'Wallet "$name" closed',
-    );
+      ctx.wallet = null;
+      return CommandResult.ok(
+        {'closed': name},
+        message: 'Wallet "$name" closed',
+      );
+    } catch (e) {
+      ctx.wallet = null;
+      ctx.logger.warn('Wallet close had errors: $e');
+      return CommandResult.ok(
+        {'closed': name, 'warning': e.toString()},
+        message: 'Wallet "$name" closed with warnings',
+      );
+    }
   }
 }
 
@@ -211,8 +218,21 @@ class GetWalletKeysCommand extends WalletCommand<Map<String, String>> {
     }
     final wallet = ctx.wallet!;
     try {
-      final keys = (wallet as dynamic).keys as Map<String, String>;
-      return CommandResult.ok(keys);
+      final rawKeys = (wallet as dynamic).keys;
+      if (rawKeys == null) {
+        return CommandResult.error('NO_KEYS',
+            message: 'Key export not supported for this wallet type');
+      }
+      // Convert keys object to string map — works with Map and toString fallback
+      final Map<String, String> keysMap;
+      if (rawKeys is Map<String, String>) {
+        keysMap = rawKeys;
+      } else if (rawKeys is Map) {
+        keysMap = rawKeys.map((k, v) => MapEntry(k.toString(), v.toString()));
+      } else {
+        keysMap = {'keys': rawKeys.toString()};
+      }
+      return CommandResult.ok(keysMap);
     } catch (_) {
       return CommandResult.error('NO_KEYS',
           message: 'Key export not supported for this wallet type');
