@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 
+import 'package:cw_core/root_dir.dart';
 import 'package:cw_core/utils/print_verbose.dart';
 import 'package:cw_core/utils/tor/abstract.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:torch_dart/abstract_tor.dart';
 
@@ -47,7 +47,7 @@ class CakeTorTorch implements CakeTorInstance {
   }
 
   Future<void> _runEmbeddedTor() async {
-    final dir = await getApplicationCacheDirectory();
+    final dir = await getAppDir();
 
     final torList = await Tor.getTorList();
     printV("tor version: ${torList.first.version}");
