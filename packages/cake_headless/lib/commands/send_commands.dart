@@ -129,6 +129,14 @@ class SendAllCommand extends WalletCommand<SendResult> {
   }
 }
 
+/// Alias for SendCommand in the two-step send.preview → send.commit flow.
+class SendCommitCommand extends SendCommand {
+  @override
+  String get name => 'send.commit';
+  @override
+  String get description => 'Commit a previewed transaction (alias for send)';
+}
+
 class SendCommand extends WalletCommand<SendResult> {
   @override
   String get name => 'send';

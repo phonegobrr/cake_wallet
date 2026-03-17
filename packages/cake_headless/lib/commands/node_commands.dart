@@ -144,6 +144,48 @@ class DeleteNodeCommand extends WalletCommand<Map<String, String>> {
   }
 }
 
+class EditNodeCommand extends WalletCommand<NodeInfo> {
+  @override
+  String get name => 'nodes.edit';
+  @override
+  String get description => 'Edit an existing node';
+  @override
+  Map<String, CommandArg> get args => {
+        'uri': CommandArg(
+            name: 'uri', description: 'Current node URI', required: true),
+        'new-uri': CommandArg(
+            name: 'new-uri', description: 'New node URI'),
+        'name': CommandArg(
+            name: 'name', description: 'New node label'),
+        'trusted':
+            CommandArg(name: 'trusted', description: 'Is trusted', type: bool),
+      };
+
+  @override
+  Future<CommandResult<NodeInfo>> execute(
+    CakeRuntimeContext ctx,
+    Map<String, dynamic> params,
+  ) async {
+    // Node editing requires delete + re-add since nodes are keyed by URI
+    if (ctx.deleteNode == null || ctx.addNode == null) {
+      return CommandResult.error('SERVICE_UNAVAILABLE',
+          message: 'Node management not configured in this runtime');
+    }
+    final uri = params['uri']?.toString() ?? '';
+    final newUri = params['new-uri']?.toString() ?? uri;
+    final nodeName = params['name']?.toString() ?? newUri;
+    final trusted = params['trusted'] == true || params['trusted'] == 'true';
+
+    try {
+      await ctx.deleteNode!(uri);
+      final node = await ctx.addNode!(newUri, nodeName, trusted);
+      return CommandResult.ok(node, message: 'Node updated: $newUri');
+    } catch (e) {
+      return CommandResult.error('NODE_EDIT_FAILED', message: e.toString());
+    }
+  }
+}
+
 class ResetNodesCommand extends WalletCommand<Map<String, String>> {
   @override
   String get name => 'nodes.reset';

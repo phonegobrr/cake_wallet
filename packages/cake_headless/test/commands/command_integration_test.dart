@@ -9,6 +9,9 @@ import 'package:cake_headless/commands/swap_commands.dart';
 import 'package:cake_headless/commands/contact_commands.dart';
 import 'package:cake_headless/commands/backup_commands.dart';
 import 'package:cake_headless/commands/tor_commands.dart';
+import 'package:cake_headless/commands/coin_commands.dart';
+import 'package:cake_headless/commands/token_commands.dart';
+import 'package:cake_headless/commands/fiat_commands.dart';
 import 'package:cake_headless/commands/unsupported_commands.dart';
 import 'package:cake_headless/ports_impl/cli_path_provider.dart';
 import 'package:cake_headless/ports_impl/filesystem_asset_loader.dart';
@@ -286,6 +289,84 @@ void main() {
     test('tor.status returns SERVICE_UNAVAILABLE', () async {
       bus.register(TorStatusCommand());
       final result = await bus.dispatch('tor.status', {});
+      expect(result.success, isFalse);
+      expect(result.errorCode, 'SERVICE_UNAVAILABLE');
+    });
+  });
+
+  group('Send commit alias', () {
+    test('send.commit returns NO_WALLET without wallet', () async {
+      bus.register(SendCommitCommand());
+      final result =
+          await bus.dispatch('send.commit', {'address': 'abc', 'amount': '1.0'});
+      expect(result.success, isFalse);
+      expect(result.errorCode, 'NO_WALLET');
+    });
+  });
+
+  group('Coin commands', () {
+    test('coins.list returns NO_WALLET without wallet', () async {
+      bus.register(ListCoinsCommand());
+      final result = await bus.dispatch('coins.list', {});
+      expect(result.success, isFalse);
+      expect(result.errorCode, 'NO_WALLET');
+    });
+
+    test('coins.freeze returns NO_WALLET without wallet', () async {
+      bus.register(FreezeCoinCommand());
+      final result = await bus.dispatch('coins.freeze', {'id': 'utxo1'});
+      expect(result.success, isFalse);
+      expect(result.errorCode, 'NO_WALLET');
+    });
+
+    test('coins.unfreeze returns NO_WALLET without wallet', () async {
+      bus.register(UnfreezeCoinCommand());
+      final result = await bus.dispatch('coins.unfreeze', {'id': 'utxo1'});
+      expect(result.success, isFalse);
+      expect(result.errorCode, 'NO_WALLET');
+    });
+  });
+
+  group('Token commands', () {
+    test('tokens.list returns NO_WALLET without wallet', () async {
+      bus.register(ListTokensCommand());
+      final result = await bus.dispatch('tokens.list', {});
+      expect(result.success, isFalse);
+      expect(result.errorCode, 'NO_WALLET');
+    });
+
+    test('tokens.add returns NO_WALLET without wallet', () async {
+      bus.register(AddTokenCommand());
+      final result =
+          await bus.dispatch('tokens.add', {'address': '0xabc'});
+      expect(result.success, isFalse);
+      expect(result.errorCode, 'NO_WALLET');
+    });
+
+    test('tokens.remove returns NO_WALLET without wallet', () async {
+      bus.register(RemoveTokenCommand());
+      final result =
+          await bus.dispatch('tokens.remove', {'address': '0xabc'});
+      expect(result.success, isFalse);
+      expect(result.errorCode, 'NO_WALLET');
+    });
+  });
+
+  group('Fiat commands', () {
+    test('fiat.convert returns SERVICE_UNAVAILABLE', () async {
+      bus.register(FiatConvertCommand());
+      final result = await bus.dispatch(
+          'fiat.convert', {'amount': '100', 'from': 'USD', 'to': 'XMR'});
+      expect(result.success, isFalse);
+      expect(result.errorCode, 'SERVICE_UNAVAILABLE');
+    });
+  });
+
+  group('Node edit', () {
+    test('nodes.edit returns SERVICE_UNAVAILABLE', () async {
+      bus.register(EditNodeCommand());
+      final result =
+          await bus.dispatch('nodes.edit', {'uri': 'host:port'});
       expect(result.success, isFalse);
       expect(result.errorCode, 'SERVICE_UNAVAILABLE');
     });

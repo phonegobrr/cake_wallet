@@ -9,6 +9,9 @@ import 'package:cake_headless/commands/swap_commands.dart';
 import 'package:cake_headless/commands/contact_commands.dart';
 import 'package:cake_headless/commands/backup_commands.dart';
 import 'package:cake_headless/commands/tor_commands.dart';
+import 'package:cake_headless/commands/coin_commands.dart';
+import 'package:cake_headless/commands/token_commands.dart';
+import 'package:cake_headless/commands/fiat_commands.dart';
 import 'package:cake_headless/commands/unsupported_commands.dart';
 import 'package:cake_headless/runtime_context.dart';
 import 'package:cake_headless/services/wallet_lock.dart';
@@ -44,6 +47,7 @@ Future<CommandBus> bootstrap(CakeRuntimeContext ctx) async {
   bus.register(SendPreviewCommand());
   bus.register(SendMaxCommand());
   bus.register(SendAllCommand());
+  bus.register(SendCommitCommand());
   bus.register(SendCommand());
   bus.register(GetReceiveAddressCommand());
   bus.register(ListAddressesCommand());
@@ -64,6 +68,7 @@ Future<CommandBus> bootstrap(CakeRuntimeContext ctx) async {
   bus.register(TestNodeCommand());
   bus.register(SelectNodeCommand());
   bus.register(DeleteNodeCommand());
+  bus.register(EditNodeCommand());
   bus.register(ResetNodesCommand());
 
   // Settings & Sync
@@ -94,6 +99,15 @@ Future<CommandBus> bootstrap(CakeRuntimeContext ctx) async {
   bus.register(TorStatusCommand());
   bus.register(TorEnableCommand());
   bus.register(TorDisableCommand());
+
+  // Coins / Tokens / Fiat
+  bus.register(ListCoinsCommand());
+  bus.register(FreezeCoinCommand());
+  bus.register(UnfreezeCoinCommand());
+  bus.register(ListTokensCommand());
+  bus.register(AddTokenCommand());
+  bus.register(RemoveTokenCommand());
+  bus.register(FiatConvertCommand());
 
   // Unsupported platform stubs
   for (final cmd in createUnsupportedCommands()) {

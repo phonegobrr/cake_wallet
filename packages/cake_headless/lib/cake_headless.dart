@@ -30,6 +30,9 @@ export 'commands/swap_commands.dart';
 export 'commands/contact_commands.dart';
 export 'commands/backup_commands.dart';
 export 'commands/tor_commands.dart';
+export 'commands/coin_commands.dart';
+export 'commands/token_commands.dart';
+export 'commands/fiat_commands.dart';
 export 'commands/unsupported_commands.dart';
 
 // DTOs
