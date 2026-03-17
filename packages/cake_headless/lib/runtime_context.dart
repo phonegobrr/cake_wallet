@@ -75,6 +75,26 @@ class CakeRuntimeContext {
   /// Callback to delete a contact by name.
   Future<void> Function(String name)? deleteContact;
 
+  /// Callback to create a wallet.
+  Future<WalletInfo> Function(String name, int typeRaw, String language,
+      {String? seed, String? password})? createWallet;
+
+  /// Callback to delete a wallet by name and type.
+  Future<void> Function(String name, int typeRaw)? deleteWallet;
+
+  /// Callback to rename a wallet.
+  Future<void> Function(String oldName, String newName, int typeRaw)?
+      renameWallet;
+
+  /// Callback to edit a contact. Returns updated entry.
+  Future<AddressEntry> Function(
+      String oldName, String newName, String address, String? currency)?
+      editContact;
+
+  /// Callback to resolve a domain/alias to an address (headless-safe).
+  Future<String> Function(String input, String currencyTitle)?
+      resolveAddress;
+
   /// Callback to export an encrypted backup to the given path.
   Future<BackupResult> Function(String outputPath)? exportBackup;
 

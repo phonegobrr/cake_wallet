@@ -277,3 +277,211 @@ class RescanWalletCommand extends WalletCommand<Map<String, String>> {
     }
   }
 }
+
+class CreateWalletCommand extends WalletCommand<WalletSummary> {
+  @override
+  String get name => 'wallet.create';
+  @override
+  String get description => 'Create a new wallet';
+  @override
+  Map<String, CommandArg> get args => {
+        'name': CommandArg(
+            name: 'name', description: 'Wallet name', required: true),
+        'type': CommandArg(
+            name: 'type',
+            description: 'Wallet type index',
+            type: int,
+            required: true),
+        'language': CommandArg(
+            name: 'language',
+            description: 'Seed language',
+            defaultValue: 'English'),
+      };
+
+  @override
+  Future<CommandResult<WalletSummary>> execute(
+    CakeRuntimeContext ctx,
+    Map<String, dynamic> params,
+  ) async {
+    if (ctx.createWallet == null) {
+      return CommandResult.error('SERVICE_UNAVAILABLE',
+          message: 'Wallet creation service not configured');
+    }
+    final walletName = params['name']?.toString() ?? '';
+    final typeRaw = (params['type'] is int)
+        ? params['type'] as int
+        : int.tryParse(params['type']?.toString() ?? '') ?? -1;
+    final language = params['language']?.toString() ?? 'English';
+
+    try {
+      final info =
+          await ctx.createWallet!(walletName, typeRaw, language);
+      return CommandResult.ok(
+        WalletSummary(
+          name: info.name,
+          typeRaw: info.type.index,
+          typeName: info.type.toString().split('.').last,
+          isActive: false,
+        ),
+        message: 'Wallet "$walletName" created',
+      );
+    } catch (e) {
+      return CommandResult.error('WALLET_CREATE_FAILED',
+          message: e.toString());
+    }
+  }
+}
+
+class RestoreWalletSeedCommand extends WalletCommand<WalletSummary> {
+  @override
+  String get name => 'wallet.restore.seed';
+  @override
+  String get description => 'Restore wallet from seed phrase';
+  @override
+  Map<String, CommandArg> get args => {
+        'name': CommandArg(
+            name: 'name', description: 'Wallet name', required: true),
+        'type': CommandArg(
+            name: 'type',
+            description: 'Wallet type index',
+            type: int,
+            required: true),
+        'seed': CommandArg(
+            name: 'seed',
+            description: 'Seed phrase (space-separated)',
+            required: true),
+        'language': CommandArg(
+            name: 'language',
+            description: 'Seed language',
+            defaultValue: 'English'),
+      };
+
+  @override
+  bool get isSafeForNonInteractive => false;
+
+  @override
+  Future<CommandResult<WalletSummary>> execute(
+    CakeRuntimeContext ctx,
+    Map<String, dynamic> params,
+  ) async {
+    if (ctx.createWallet == null) {
+      return CommandResult.error('SERVICE_UNAVAILABLE',
+          message: 'Wallet creation service not configured');
+    }
+    final walletName = params['name']?.toString() ?? '';
+    final typeRaw = (params['type'] is int)
+        ? params['type'] as int
+        : int.tryParse(params['type']?.toString() ?? '') ?? -1;
+    final seed = params['seed']?.toString() ?? '';
+    final language = params['language']?.toString() ?? 'English';
+
+    try {
+      final info = await ctx.createWallet!(walletName, typeRaw, language,
+          seed: seed);
+      return CommandResult.ok(
+        WalletSummary(
+          name: info.name,
+          typeRaw: info.type.index,
+          typeName: info.type.toString().split('.').last,
+          isActive: false,
+        ),
+        message: 'Wallet "$walletName" restored from seed',
+      );
+    } catch (e) {
+      return CommandResult.error('WALLET_RESTORE_FAILED',
+          message: e.toString());
+    }
+  }
+}
+
+class DeleteWalletCommand extends WalletCommand<Map<String, String>> {
+  @override
+  String get name => 'wallet.delete';
+  @override
+  String get description => 'Delete a wallet';
+  @override
+  Map<String, CommandArg> get args => {
+        'name': CommandArg(
+            name: 'name', description: 'Wallet name', required: true),
+        'type': CommandArg(
+            name: 'type',
+            description: 'Wallet type index',
+            type: int,
+            required: true),
+      };
+
+  @override
+  bool get isSafeForNonInteractive => false;
+
+  @override
+  Future<CommandResult<Map<String, String>>> execute(
+    CakeRuntimeContext ctx,
+    Map<String, dynamic> params,
+  ) async {
+    if (ctx.deleteWallet == null) {
+      return CommandResult.error('SERVICE_UNAVAILABLE',
+          message: 'Wallet deletion not configured');
+    }
+    final walletName = params['name']?.toString() ?? '';
+    final typeRaw = (params['type'] is int)
+        ? params['type'] as int
+        : int.tryParse(params['type']?.toString() ?? '') ?? -1;
+
+    try {
+      await ctx.deleteWallet!(walletName, typeRaw);
+      return CommandResult.ok(
+        {'deleted': walletName},
+        message: 'Wallet "$walletName" deleted',
+      );
+    } catch (e) {
+      return CommandResult.error('WALLET_DELETE_FAILED',
+          message: e.toString());
+    }
+  }
+}
+
+class RenameWalletCommand extends WalletCommand<Map<String, String>> {
+  @override
+  String get name => 'wallet.rename';
+  @override
+  String get description => 'Rename a wallet';
+  @override
+  Map<String, CommandArg> get args => {
+        'name': CommandArg(
+            name: 'name', description: 'Current wallet name', required: true),
+        'new-name': CommandArg(
+            name: 'new-name', description: 'New wallet name', required: true),
+        'type': CommandArg(
+            name: 'type',
+            description: 'Wallet type index',
+            type: int,
+            required: true),
+      };
+
+  @override
+  Future<CommandResult<Map<String, String>>> execute(
+    CakeRuntimeContext ctx,
+    Map<String, dynamic> params,
+  ) async {
+    if (ctx.renameWallet == null) {
+      return CommandResult.error('SERVICE_UNAVAILABLE',
+          message: 'Wallet rename not configured');
+    }
+    final oldName = params['name']?.toString() ?? '';
+    final newName = params['new-name']?.toString() ?? '';
+    final typeRaw = (params['type'] is int)
+        ? params['type'] as int
+        : int.tryParse(params['type']?.toString() ?? '') ?? -1;
+
+    try {
+      await ctx.renameWallet!(oldName, newName, typeRaw);
+      return CommandResult.ok(
+        {'old': oldName, 'new': newName},
+        message: 'Wallet renamed from "$oldName" to "$newName"',
+      );
+    } catch (e) {
+      return CommandResult.error('WALLET_RENAME_FAILED',
+          message: e.toString());
+    }
+  }
+}

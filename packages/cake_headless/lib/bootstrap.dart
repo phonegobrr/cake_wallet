@@ -32,8 +32,14 @@ Future<CommandBus> bootstrap(CakeRuntimeContext ctx) async {
   bus.register(GetWalletSeedCommand());
   bus.register(GetWalletKeysCommand());
   bus.register(RescanWalletCommand());
+  bus.register(CreateWalletCommand());
+  bus.register(RestoreWalletSeedCommand());
+  bus.register(DeleteWalletCommand());
+  bus.register(RenameWalletCommand());
 
   // Send / Receive
+  bus.register(SendPreviewCommand());
+  bus.register(SendMaxCommand());
   bus.register(SendCommand());
   bus.register(GetReceiveAddressCommand());
   bus.register(ListAddressesCommand());
@@ -66,6 +72,7 @@ Future<CommandBus> bootstrap(CakeRuntimeContext ctx) async {
   bus.register(ListContactsCommand());
   bus.register(AddContactCommand());
   bus.register(DeleteContactCommand());
+  bus.register(EditContactCommand());
 
   // Backup
   bus.register(ExportBackupCommand());

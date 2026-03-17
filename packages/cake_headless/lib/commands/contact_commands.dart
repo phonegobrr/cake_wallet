@@ -98,3 +98,44 @@ class DeleteContactCommand extends WalletCommand<Map<String, String>> {
     }
   }
 }
+
+class EditContactCommand extends WalletCommand<AddressEntry> {
+  @override
+  String get name => 'contacts.edit';
+  @override
+  String get description => 'Edit an existing contact';
+  @override
+  Map<String, CommandArg> get args => {
+        'name': CommandArg(
+            name: 'name', description: 'Current contact name', required: true),
+        'new-name': CommandArg(
+            name: 'new-name', description: 'New contact name'),
+        'address': CommandArg(
+            name: 'address', description: 'New address'),
+        'currency': CommandArg(
+            name: 'currency', description: 'Currency code'),
+      };
+
+  @override
+  Future<CommandResult<AddressEntry>> execute(
+    CakeRuntimeContext ctx,
+    Map<String, dynamic> params,
+  ) async {
+    if (ctx.editContact == null) {
+      return CommandResult.error('SERVICE_UNAVAILABLE',
+          message: 'Contact editing not configured');
+    }
+    final oldName = params['name']?.toString() ?? '';
+    final newName = params['new-name']?.toString() ?? oldName;
+    final address = params['address']?.toString() ?? '';
+    final currency = params['currency']?.toString();
+
+    try {
+      final entry = await ctx.editContact!(oldName, newName, address, currency);
+      return CommandResult.ok(entry, message: 'Contact "$oldName" updated');
+    } catch (e) {
+      return CommandResult.error('CONTACT_EDIT_FAILED',
+          message: e.toString());
+    }
+  }
+}
