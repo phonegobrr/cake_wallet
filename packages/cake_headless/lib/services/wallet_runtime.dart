@@ -4,15 +4,19 @@ import 'package:cw_core/wallet_info.dart';
 
 /// Bridge between [CakeRuntimeContext] and the GetIt DI container.
 ///
-/// This is the single integration layer that wires headless runtime callbacks
-/// to the actual wallet services registered via GetIt. Entry points call
-/// [wireAll] after [initializeHeadless] has completed.
+/// Wires the callbacks on [ctx] that can be connected using only
+/// `cw_core` types (no Flutter or GetIt dependency). The entry point
+/// is responsible for wiring callbacks that require GetIt-registered
+/// services (loadWallet, sendTransaction, etc.) directly on [ctx]
+/// after calling [wireAll].
 ///
 /// Usage in cake.dart:
 /// ```dart
-/// await initializeHeadless(dataDir: appDir, secureStorage: adapter);
 /// final runtime = WalletRuntime(ctx);
 /// await runtime.wireAll();
+/// // Then wire GetIt-dependent callbacks directly on ctx:
+/// // ctx.loadWallet = ...
+/// // ctx.sendTransaction = ...
 /// await runtime.autoLoadCurrentWallet();
 /// ```
 class WalletRuntime {
@@ -20,95 +24,32 @@ class WalletRuntime {
 
   WalletRuntime(this.ctx);
 
-  /// Wire all callbacks on [ctx] to the GetIt-registered services.
-  /// Call this after [initializeHeadless] has completed.
+  /// Wire callbacks on [ctx] that only need `cw_core` types.
+  /// GetIt-dependent callbacks (loadWallet, sendTransaction, etc.)
+  /// must be set by the entry point directly on [ctx].
   Future<void> wireAll() async {
     // Wire listWalletInfos — WalletInfo.getAll() reads from SQLite
     ctx.listWalletInfos = () => WalletInfo.getAll();
-
-    // Wire loadWallet — requires WalletLoadingService from GetIt
-    ctx.loadWallet = _loadWallet;
-
-    // Wire listContacts, listNodes, addContact, deleteContact, addNode,
-    // selectNode, deleteNode — these will be connected to Hive boxes
-    // and services once the full DI container is available.
-    //
-    // For now, these remain null and commands return SERVICE_UNAVAILABLE.
-    // The entry point (cake.dart) sets these after initializeHeadless()
-    // when GetIt has the required service registrations.
   }
 
-  /// Load a wallet by name and wallet type index.
-  /// This method is designed to be called from the headless runtime context.
-  Future<void> _loadWallet(String name, int walletTypeRaw) async {
-    // Dynamic import to avoid hard dependency on Flutter-coupled DI
-    // The actual loading is done through GetIt when available
-    try {
-      final getIt = _tryGetIt();
-      if (getIt == null) {
-        throw StateError('GetIt not initialized — call initializeHeadless() first');
-      }
-
-      // Use WalletLoadingService from GetIt
-      final loadingService = getIt.call<dynamic>(instanceName: 'WalletLoadingService');
-      if (loadingService == null) {
-        throw StateError('WalletLoadingService not registered');
-      }
-
-      // WalletLoadingService.load(WalletType, String name)
-      final walletType = _deserializeWalletType(walletTypeRaw);
-      final wallet = await (loadingService as dynamic).load(walletType, name);
-
-      // Update AppStore
-      final appStore = getIt.call<dynamic>(instanceName: 'AppStore');
-      if (appStore != null) {
-        await (appStore as dynamic).changeCurrentWallet(wallet);
-      }
-
-      ctx.wallet = wallet;
-      ctx.eventBus.emit(
-          WalletEvent(WalletEventType.walletOpened, data: {'name': name}));
-    } catch (e) {
-      ctx.logger.error('Failed to load wallet "$name": $e');
-      rethrow;
-    }
-  }
-
-  /// Try to auto-load the last used wallet from SharedPreferences.
+  /// Try to auto-load the last used wallet using the loadWallet callback.
+  /// Requires [ctx.loadWallet] and a settings store with wallet name/type.
   Future<void> autoLoadCurrentWallet() async {
+    if (ctx.loadWallet == null) {
+      ctx.logger.debug('loadWallet not wired — skipping auto-load');
+      return;
+    }
+
     try {
-      final getIt = _tryGetIt();
-      if (getIt == null) return;
+      final name = await ctx.settings.getString('current_wallet_name');
+      final typeRaw = await ctx.settings.getInt('current_wallet_type');
 
-      final prefs = getIt.call<dynamic>(instanceName: 'SharedPreferences');
-      if (prefs == null) return;
-
-      final name = (prefs as dynamic).getString('current_wallet_name') as String?;
-      final typeRaw = (prefs as dynamic).getInt('current_wallet_type') as int?;
-
-      if (name != null && typeRaw != null && ctx.loadWallet != null) {
+      if (name != null && typeRaw != null) {
+        ctx.logger.info('Auto-loading wallet "$name" (type: $typeRaw)');
         await ctx.loadWallet!(name, typeRaw);
       }
     } catch (e) {
       ctx.logger.warn('Failed to auto-load wallet: $e');
     }
-  }
-
-  /// Attempt to get the GetIt instance via reflection.
-  /// Returns null if GetIt is not available.
-  Function? _tryGetIt() {
-    try {
-      // GetIt.instance.get<T>() — we access it dynamically to avoid
-      // a hard import dependency on get_it from this file
-      return null; // Placeholder — the entry point wires this directly
-    } catch (_) {
-      return null;
-    }
-  }
-
-  dynamic _deserializeWalletType(int raw) {
-    // WalletType enum values — imported from cw_core at usage sites
-    // This is a simple index-based deserialization
-    return raw;
   }
 }

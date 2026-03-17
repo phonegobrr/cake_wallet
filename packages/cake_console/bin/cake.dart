@@ -5,8 +5,12 @@ import 'dart:typed_data';
 import 'package:args/command_runner.dart';
 import 'package:cake_headless/cake_headless.dart';
 import 'package:cake_console/cli/cli_runner.dart';
+import 'package:cw_core/utils/print_verbose.dart' show printVSink;
 
 Future<void> main(List<String> args) async {
+  // Redirect all printV output to stderr so stdout stays clean for MCP/JSON
+  printVSink = (line) => stderr.writeln(line);
+
   // Build runtime context with CLI port implementations
   final pathProvider = CliPathProvider();
   final appDir = await pathProvider.getAppDir();
