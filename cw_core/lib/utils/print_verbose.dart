@@ -5,6 +5,10 @@ const bool kDebugMode = !bool.fromEnvironment('dart.vm.product');
 
 enum LogLevel { info, debug, warn, error }
 
+/// Global configurable output sink for printV.
+/// Defaults to stdout (via print). Set to stderr for headless/MCP modes.
+void Function(String line) printVSink = (line) => print(line);
+
 /// Pass an optional [file] to also write the log to a file.
 void printV(
   dynamic content, {
@@ -15,7 +19,7 @@ void printV(
   final logLine =
       "[${level.name.toUpperCase()}] ${programInfo.fileName}#${programInfo.lineNumber}:${programInfo.columnNumber} ${programInfo.callerFunctionName}: $content";
 
-  print(logLine);
+  printVSink(logLine);
 
   if (file != null) {
     final logFile = File(file);
