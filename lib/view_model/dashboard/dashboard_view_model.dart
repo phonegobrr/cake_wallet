@@ -244,7 +244,7 @@ abstract class DashboardViewModelBase with Store {
             transaction: transaction,
             balanceViewModel: balanceViewModel,
             appStore: appStore,
-            key: ValueKey('monero_transaction_history_item_${transaction.id}_key'),
+            listItemId: 'monero_transaction_history_item_${transaction.id}',
           ),
         ),
       );
@@ -274,7 +274,7 @@ abstract class DashboardViewModelBase with Store {
             transaction: transaction,
             balanceViewModel: balanceViewModel,
             appStore: appStore,
-            key: ValueKey('wownero_transaction_history_item_${transaction.id}_key'),
+            listItemId: 'wownero_transaction_history_item_${transaction.id}',
           ),
         ),
       );
@@ -288,7 +288,7 @@ abstract class DashboardViewModelBase with Store {
             transaction: transaction,
             balanceViewModel: balanceViewModel,
             appStore: appStore,
-            key: ValueKey('${_wallet.type.name}_transaction_history_item_${transaction.id}_key'),
+            listItemId: '${_wallet.type.name}_transaction_history_item_${transaction.id}',
           ),
         ),
       );
@@ -363,7 +363,7 @@ abstract class DashboardViewModelBase with Store {
           transaction: transaction,
           balanceViewModel: balanceViewModel,
           appStore: appStore,
-          key: ValueKey('${wallet.type.name}_transaction_history_item_${transaction.id}_key'),
+          listItemId: '${wallet.type.name}_transaction_history_item_${transaction.id}',
         ),
       ),
     );
@@ -486,7 +486,7 @@ abstract class DashboardViewModelBase with Store {
                 transaction: tx,
                 balanceViewModel: balanceViewModel,
                 appStore: appStore,
-                key: ValueKey('${wallet.type.name}_transaction_history_item_${tx.id}_key'),
+                listItemId: '${wallet.type.name}_transaction_history_item_${tx.id}',
               ))
           .where((item) => !transactions.contains(item));
 
@@ -496,7 +496,7 @@ abstract class DashboardViewModelBase with Store {
       //       transaction: tx,
       //       balanceViewModel: balanceViewModel,
       //       appStore: appStore,
-      //       key: ValueKey('${wallet.type.name}_transaction_history_item_${tx.id}_key'),
+      //       listItemId: '${wallet.type.name}_transaction_history_item_${tx.id}',
       //     )));
     } finally {
       _isTransactionDisposerCallbackRunning = false;
@@ -1293,7 +1293,7 @@ abstract class DashboardViewModelBase with Store {
             transaction: transaction,
             balanceViewModel: balanceViewModel,
             appStore: appStore,
-            key: ValueKey('monero_transaction_history_item_${transaction.id}_key'),
+            listItemId: 'monero_transaction_history_item_${transaction.id}',
           ),
         ),
       );
@@ -1313,7 +1313,7 @@ abstract class DashboardViewModelBase with Store {
             transaction: transaction,
             balanceViewModel: balanceViewModel,
             appStore: appStore,
-            key: ValueKey('wownero_transaction_history_item_${transaction.id}_key'),
+            listItemId: 'wownero_transaction_history_item_${transaction.id}',
           ),
         ),
       );

@@ -7,7 +7,7 @@ class PayjoinTransactionListItem extends ActionListItem {
   PayjoinTransactionListItem({
     required this.sessionId,
     required this.session,
-    required super.key,
+    required super.listItemId,
   });
 
   final String sessionId;

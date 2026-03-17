@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:cake_wallet/view_model/dashboard/payjoin_transaction_list_item.dart';
 import 'package:cw_core/payjoin_session.dart';
-import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
 
@@ -37,7 +36,7 @@ abstract class PayjoinTransactionsStoreBase with Store {
         updatedTransactions.add(PayjoinTransactionListItem(
           sessionId: key as String,
           session: session,
-          key: ValueKey('payjoin_transaction_list_item_${key}_key'),
+          listItemId: 'payjoin_transaction_list_item_$key',
         ));
       }
     });

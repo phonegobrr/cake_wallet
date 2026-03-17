@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:cake_wallet/exchange/trade.dart';
 import 'package:cake_wallet/store/app_store.dart';
 import 'package:cake_wallet/view_model/dashboard/trade_list_item.dart';
-import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
 
@@ -35,7 +34,7 @@ abstract class TradesStoreBase with Store {
       .map((trade) => TradeListItem(
             trade: trade,
             appStore: appStore,
-            key: ValueKey('trade_list_item_${trade.id}_key'),
+            listItemId: 'trade_list_item_${trade.id}',
           ))
       .toList();
 }

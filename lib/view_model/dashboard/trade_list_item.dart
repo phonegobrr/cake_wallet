@@ -7,7 +7,7 @@ class TradeListItem extends ActionListItem {
   TradeListItem({
     required this.trade,
     required this.appStore,
-    required super.key,
+    required super.listItemId,
   });
 
   final Trade trade;

@@ -7,7 +7,7 @@ class OrderListItem extends ActionListItem {
   OrderListItem({
     required this.order,
     required this.settingsStore,
-    required super.key,
+    required super.listItemId,
   });
 
   final Order order;

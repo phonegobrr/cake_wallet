@@ -28,7 +28,7 @@ class TransactionListItem extends ActionListItem with Keyable {
     required this.transaction,
     required this.balanceViewModel,
     required AppStore appStore,
-    required super.key,
+    required super.listItemId,
   }) : _appStore = appStore;
 
   final TransactionInfo transaction;

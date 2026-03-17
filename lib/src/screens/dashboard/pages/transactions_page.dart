@@ -81,7 +81,7 @@ class TransactionsPage extends StatelessWidget {
                             final item = items[index];
 
                             if (item is DateSectionItem) {
-                              return DateSectionRaw(date: item.date, key: item.key);
+                              return DateSectionRaw(date: item.date, key: ValueKey(item.listItemId));
                             }
 
                             if (item is TransactionListItem) {
@@ -106,7 +106,7 @@ class TransactionsPage extends StatelessWidget {
                               }
                               return Observer(
                                 builder: (_) => TransactionRow(
-                                  key: item.key,
+                                  key: ValueKey(item.listItemId),
                                   onTap: () => Navigator.of(context)
                                       .pushNamed(Routes.transactionDetails, arguments: transaction),
                                   isShield: transaction.additionalInfo['autoShield'] == true,
@@ -128,7 +128,7 @@ class TransactionsPage extends StatelessWidget {
                               final transactionInfo = item.transaction;
 
                               return AnonpayTransactionRow(
-                                key: item.key,
+                                key: ValueKey(item.listItemId),
                                 onTap: () => Navigator.of(context).pushNamed(
                                     Routes.anonPayDetailsPage,
                                     arguments: transactionInfo),
@@ -148,7 +148,7 @@ class TransactionsPage extends StatelessWidget {
                               final session = item.session;
 
                               return PayjoinTransactionRow(
-                                key: item.key,
+                                key: ValueKey(item.listItemId),
                                 onTap: () => Navigator.of(context).pushNamed(
                                   Routes.payjoinDetails,
                                   arguments: [item.sessionId, item.transaction],
@@ -173,7 +173,7 @@ class TransactionsPage extends StatelessWidget {
                               return tradeFrom != null && tradeTo != null
                                   ? Observer(
                                       builder: (_) => TradeRow(
-                                        key: item.key,
+                                        key: ValueKey(item.listItemId),
                                         onTap: () => Navigator.of(context)
                                             .pushNamed(Routes.tradeDetails, arguments: trade),
                                         swapState: trade.state,
@@ -204,7 +204,7 @@ class TransactionsPage extends StatelessWidget {
                                   final formattedReceiveAmount = hide ? '---' : order.receiveAmount;
 
                                   return OrderRow(
-                                    key: item.key,
+                                    key: ValueKey(item.listItemId),
                                     onTap: () => Navigator.of(context)
                                         .pushNamed(Routes.orderDetails, arguments: order),
                                     providerTitle: order.providerTitle,

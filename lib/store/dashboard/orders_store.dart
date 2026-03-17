@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:cake_wallet/order/order.dart';
 import 'package:cake_wallet/view_model/dashboard/order_list_item.dart';
-import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
 import 'package:cake_wallet/store/settings_store.dart';
@@ -41,7 +40,7 @@ abstract class OrdersStoreBase with Store {
       .map((order) => OrderListItem(
             order: order,
             settingsStore: settingsStore,
-            key: ValueKey('order_list_item_${order.id}_key'),
+            listItemId: 'order_list_item_${order.id}',
           ))
       .toList();
 }
