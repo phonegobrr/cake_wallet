@@ -9,6 +9,15 @@ String? _rootDirPath;
 /// path_provider to determine the correct directory, then calls this.
 void setRootDirOverride(String path) => _rootDirPath = path;
 
+/// Override directory for native FFI library loading.
+/// Call from CLI/server entry points where native libs are bundled differently
+/// than in Flutter plugin paths.
+String? _nativeLibDirOverride;
+
+void setNativeLibDirOverride(String path) => _nativeLibDirOverride = path;
+
+String? getNativeLibDirOverride() => _nativeLibDirOverride;
+
 const String _tailsData = '/live/persistence/TailsData_unlocked/Persistent';
 
 bool get isNonAmnesticTails {

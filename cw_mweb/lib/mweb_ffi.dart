@@ -6,12 +6,22 @@ import 'package:cw_mweb/generated_bindings.g.dart';
 import 'package:cw_mweb/print_verbose.dart';
 import 'package:ffi/ffi.dart';
 
+/// Override for CLI/server builds where native libs are bundled differently.
+String? _nativeLibDirOverride;
+
+/// Call before any MWEB operations to override native library search path.
+void setMwebNativeLibDir(String path) => _nativeLibDirOverride = path;
+
 String libPath = (() {
-  if (Platform.isWindows) return 'mweb.dll';
-  if (Platform.isMacOS) return 'mweb.dylib';
-  if (Platform.isIOS) return 'Mwebd.framework/Mwebd';
-  if (Platform.isAndroid) return 'libmweb.so';
-  return 'libmweb.so';
+  final name = (() {
+    if (Platform.isWindows) return 'mweb.dll';
+    if (Platform.isMacOS) return 'mweb.dylib';
+    if (Platform.isIOS) return 'Mwebd.framework/Mwebd';
+    if (Platform.isAndroid) return 'libmweb.so';
+    return 'libmweb.so';
+  })();
+  if (_nativeLibDirOverride != null) return '$_nativeLibDirOverride/$name';
+  return name;
 })();
 
 class MWebFfi {

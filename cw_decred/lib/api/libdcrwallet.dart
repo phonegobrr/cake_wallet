@@ -9,9 +9,21 @@ import 'package:cw_decred/api/util.dart';
 
 final int ErrCodeNotSynced = 1;
 
-final String libraryName = Platform.isAndroid || Platform.isLinux // TODO: Linux.
-    ? 'libdcrwallet.so'
-    : 'cw_decred.framework/cw_decred';
+/// Override for CLI/server builds where native libs are bundled differently.
+String? _nativeLibDirOverride;
+
+/// Call before any wallet operations to override native library search path.
+void setNativeLibDir(String path) => _nativeLibDirOverride = path;
+
+String get libraryName {
+  final name = Platform.isAndroid || Platform.isLinux
+      ? 'libdcrwallet.so'
+      : 'cw_decred.framework/cw_decred';
+  if (_nativeLibDirOverride != null) {
+    return '$_nativeLibDirOverride/$name';
+  }
+  return name;
+}
 
 class Libwallet {
   final SendPort _commands;
