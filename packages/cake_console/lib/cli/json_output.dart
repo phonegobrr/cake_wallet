@@ -3,29 +3,47 @@ import 'dart:io';
 
 import 'package:cake_headless/commands/command_result.dart';
 
+/// Serializes any DTO or value to a JSON-friendly map.
+Map<String, dynamic> _serializeData(dynamic data) {
+  if (data is Map) return Map<String, dynamic>.from(data);
+  if (data is List) {
+    return {
+      'items': data.map((e) => _serializeData(e)).toList(),
+    };
+  }
+  try {
+    final result = (data as dynamic).toJson();
+    if (result is Map<String, dynamic>) return result;
+    return {'value': result.toString()};
+  } catch (_) {
+    return {'value': data.toString()};
+  }
+}
+
 /// Renders a CommandResult as JSON to stdout.
 void outputJson(CommandResult result) {
-  final json = result.toJson((data) {
-    if (data is Map) return data as Map<String, dynamic>;
-    if (data is List) {
-      return {'items': data.map((e) {
-        if (e is Map) return e;
-        final toJsonMethod = (e as dynamic).toJson;
-        if (toJsonMethod != null) return toJsonMethod();
-        return {'value': e.toString()};
-      }).toList()};
-    }
-    final toJsonMethod = (data as dynamic).toJson;
-    if (toJsonMethod != null) return toJsonMethod() as Map<String, dynamic>;
-    return {'value': data.toString()};
-  });
+  final json = result.toJson((data) => _serializeData(data));
   stdout.writeln(jsonEncode(json));
+}
+
+/// Formats a single data item as a human-readable string.
+String _formatItem(dynamic item) {
+  try {
+    final json = (item as dynamic).toJson();
+    if (json is Map) {
+      return json.entries.map((e) => '${e.key}: ${e.value}').join('  ');
+    }
+    return json.toString();
+  } catch (_) {
+    return item.toString();
+  }
 }
 
 /// Renders a CommandResult as human-readable text to stdout.
 void outputText(CommandResult result) {
   if (!result.success) {
-    stderr.writeln('Error: ${result.message ?? result.errorCode ?? "Unknown error"}');
+    stderr.writeln(
+        'Error: ${result.message ?? result.errorCode ?? "Unknown error"}');
     return;
   }
   if (result.message != null) {
@@ -34,11 +52,19 @@ void outputText(CommandResult result) {
   if (result.data != null) {
     final data = result.data;
     if (data is List) {
-      for (final item in data) {
-        stdout.writeln('  $item');
+      if (data.isEmpty) {
+        stdout.writeln('  (none)');
+      } else {
+        for (final item in data) {
+          stdout.writeln('  ${_formatItem(item)}');
+        }
+      }
+    } else if (data is Map) {
+      for (final entry in data.entries) {
+        stdout.writeln('  ${entry.key}: ${entry.value}');
       }
     } else {
-      stdout.writeln(result.data);
+      stdout.writeln('  ${_formatItem(data)}');
     }
   }
 }
