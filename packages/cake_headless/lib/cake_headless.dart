@@ -15,6 +15,7 @@ export 'ports_impl/cli_path_provider.dart';
 export 'ports_impl/filesystem_asset_loader.dart';
 export 'ports_impl/stdin_secret_input.dart';
 export 'ports_impl/stderr_logger.dart';
+export 'ports_impl/headless_secure_storage_adapter.dart';
 
 // Commands
 export 'commands/command.dart';
@@ -59,6 +60,9 @@ export 'services/wallet_runtime.dart';
 // i18n
 export 'i18n/app_strings.dart';
 export 'i18n/default_app_strings.dart';
+
+// Initialization
+export 'headless_init.dart';
 
 // Core
 export 'runtime_context.dart';

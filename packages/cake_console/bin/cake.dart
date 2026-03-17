@@ -44,8 +44,18 @@ Future<void> main(List<String> args) async {
   ctx.nonInteractive = isMcpMode;
   ctx.jsonMode = args.contains('--json');
 
+  // Initialize Hive, SQLite, and register cw_core adapters + GetIt singletons
+  await initializeHeadlessCore(
+    dataDir: appDir,
+    secureStorage: HeadlessSecureStorageAdapter(secureStorage),
+  );
+
   // Use bootstrap() to register all commands and acquire wallet lock
   final bus = await bootstrap(ctx);
+
+  // Wire WalletRuntime callbacks (cw_core-only: WalletInfo.getAll)
+  final runtime = WalletRuntime(ctx);
+  await runtime.wireAll();
 
   // Build CLI runner
   final runner = CommandRunner<void>('cake', 'Cake Wallet CLI/TUI')
