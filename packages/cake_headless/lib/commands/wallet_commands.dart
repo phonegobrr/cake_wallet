@@ -311,6 +311,10 @@ class CreateWalletCommand extends WalletCommand<WalletSummary> {
     final typeRaw = (params['type'] is int)
         ? params['type'] as int
         : int.tryParse(params['type']?.toString() ?? '') ?? -1;
+    if (walletName.isEmpty || typeRaw < 0) {
+      return CommandResult.error('INVALID_ARGS',
+          message: 'Valid wallet name and type are required');
+    }
     final language = params['language']?.toString() ?? 'English';
 
     try {
@@ -373,6 +377,10 @@ class RestoreWalletSeedCommand extends WalletCommand<WalletSummary> {
         ? params['type'] as int
         : int.tryParse(params['type']?.toString() ?? '') ?? -1;
     final seed = params['seed']?.toString() ?? '';
+    if (walletName.isEmpty || typeRaw < 0 || seed.isEmpty) {
+      return CommandResult.error('INVALID_ARGS',
+          message: 'Valid wallet name, type, and seed are required');
+    }
     final language = params['language']?.toString() ?? 'English';
 
     try {
@@ -426,8 +434,16 @@ class DeleteWalletCommand extends WalletCommand<Map<String, String>> {
     final typeRaw = (params['type'] is int)
         ? params['type'] as int
         : int.tryParse(params['type']?.toString() ?? '') ?? -1;
+    if (walletName.isEmpty || typeRaw < 0) {
+      return CommandResult.error('INVALID_ARGS',
+          message: 'Valid wallet name and type are required');
+    }
 
     try {
+      // Clear active wallet if we're deleting it
+      if (ctx.hasWallet && ctx.wallet!.walletInfo.name == walletName) {
+        ctx.wallet = null;
+      }
       await ctx.deleteWallet!(walletName, typeRaw);
       return CommandResult.ok(
         {'deleted': walletName},
@@ -472,6 +488,10 @@ class RenameWalletCommand extends WalletCommand<Map<String, String>> {
     final typeRaw = (params['type'] is int)
         ? params['type'] as int
         : int.tryParse(params['type']?.toString() ?? '') ?? -1;
+    if (oldName.isEmpty || newName.isEmpty || typeRaw < 0) {
+      return CommandResult.error('INVALID_ARGS',
+          message: 'Valid old name, new name, and type are required');
+    }
 
     try {
       await ctx.renameWallet!(oldName, newName, typeRaw);
