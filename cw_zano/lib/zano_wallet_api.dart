@@ -3,6 +3,7 @@ import 'dart:ffi';
 import 'dart:io';
 import 'dart:isolate';
 
+import 'package:cw_core/root_dir.dart';
 import 'package:cw_core/transaction_priority.dart';
 import 'package:cw_core/utils/print_verbose.dart';
 import 'package:cw_core/zano_asset.dart';
@@ -27,6 +28,19 @@ import 'package:json_bigint/json_bigint.dart';
 import 'package:monero/zano.dart' as zano;
 import 'package:monero/src/generated_bindings_zano.g.dart' as zanoapi;
 import 'package:path/path.dart' as p;
+
+String _getZanoLibPath() {
+  final override = getNativeLibDirOverride();
+  if (override != null) {
+    final name = Platform.isAndroid || Platform.isLinux
+        ? 'libzano.so'
+        : zano.libPath;
+    return '$override/$name';
+  }
+  return zano.libPath;
+}
+
+DynamicLibrary _openZanoLib() => DynamicLibrary.open(_getZanoLibPath());
 
 mixin ZanoWalletApi {
   static const _maxReopenAttempts = 5;
@@ -460,7 +474,7 @@ Future<String> callSyncMethod(String methodName, int hWallet, String params) asy
   final params_ = params.toNativeUtf8().address;
   final method_name_ = methodName.toNativeUtf8().address;
   final invokeResult = await Isolate.run(() async {
-    final lib = zanoapi.ZanoC(DynamicLibrary.open(zano.libPath));
+    final lib = zanoapi.ZanoC(_openZanoLib());
     final txid = lib.ZANO_PlainWallet_syncCall(
       Pointer.fromAddress(method_name_).cast(), 
       hWallet, 
@@ -494,7 +508,7 @@ String jsonEncode(Object? object) {
 
 Future<String> _getWalletStatus(int hWallet) async {
   final jsonPtr = await Isolate.run(() async {
-    final lib = zanoapi.ZanoC(DynamicLibrary.open(zano.libPath));
+    final lib = zanoapi.ZanoC(_openZanoLib());
     final status = lib.ZANO_PlainWallet_getWalletStatus(
       hWallet, 
     );
@@ -513,7 +527,7 @@ Future<String> _getWalletStatus(int hWallet) async {
 }
 Future<String> _getWalletInfo(int hWallet) async {
   final jsonPtr = await Isolate.run(() async {
-    final lib = zanoapi.ZanoC(DynamicLibrary.open(zano.libPath));
+    final lib = zanoapi.ZanoC(_openZanoLib());
     final status = lib.ZANO_PlainWallet_getWalletInfo(
       hWallet, 
     );

@@ -2,32 +2,30 @@ import 'dart:ffi';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:cw_core/root_dir.dart';
 import 'package:cw_mweb/generated_bindings.g.dart';
 import 'package:cw_mweb/print_verbose.dart';
 import 'package:ffi/ffi.dart';
 
-/// Override for CLI/server builds where native libs are bundled differently.
-String? _nativeLibDirOverride;
+String _mwebLibName() {
+  if (Platform.isWindows) return 'mweb.dll';
+  if (Platform.isMacOS) return 'mweb.dylib';
+  if (Platform.isIOS) return 'Mwebd.framework/Mwebd';
+  if (Platform.isAndroid) return 'libmweb.so';
+  return 'libmweb.so';
+}
 
-/// Call before any MWEB operations to override native library search path.
-void setMwebNativeLibDir(String path) => _nativeLibDirOverride = path;
-
-String libPath = (() {
-  final name = (() {
-    if (Platform.isWindows) return 'mweb.dll';
-    if (Platform.isMacOS) return 'mweb.dylib';
-    if (Platform.isIOS) return 'Mwebd.framework/Mwebd';
-    if (Platform.isAndroid) return 'libmweb.so';
-    return 'libmweb.so';
-  })();
-  if (_nativeLibDirOverride != null) return '$_nativeLibDirOverride/$name';
+String getMwebLibPath() {
+  final override = getNativeLibDirOverride();
+  final name = _mwebLibName();
+  if (override != null) return '$override/$name';
   return name;
-})();
+}
 
 class MWebFfi {
   late final MWebFlutter lib;
 
-  MWebFfi() : lib = MWebFlutter(DynamicLibrary.open(libPath));
+  MWebFfi() : lib = MWebFlutter(DynamicLibrary.open(getMwebLibPath()));
 
   static MWebFfi instance = MWebFfi();
 
