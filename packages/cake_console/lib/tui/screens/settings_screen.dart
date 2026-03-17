@@ -48,8 +48,16 @@ class SettingsScreen extends TuiScreen {
 
     final entries = _settings.entries.toList();
 
+    // Clamp selection after list changes
+    if (entries.isNotEmpty) {
+      _selectedIndex = _selectedIndex.clamp(0, entries.length - 1);
+    } else {
+      _selectedIndex = 0;
+    }
+
     // Viewport
     final availableHeight = (height - 6).clamp(1, entries.length);
+    _scrollOffset = _scrollOffset.clamp(0, (entries.length - 1).clamp(0, entries.length));
     if (_selectedIndex < _scrollOffset) {
       _scrollOffset = _selectedIndex;
     }

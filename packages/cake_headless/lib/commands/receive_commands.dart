@@ -125,10 +125,15 @@ class GetReceiveUriCommand extends WalletCommand<Map<String, String>> {
     final wallet = ctx.wallet!;
     final address = wallet.walletAddresses.address;
     final amount = params['amount']?.toString();
-    final scheme = wallet.currency.title.toLowerCase();
-    final uri = amount != null
-        ? '$scheme:$address?amount=$amount'
-        : '$scheme:$address';
+    // Use wallet-specific URI builder if available
+    String uri;
+    try {
+      uri = (wallet.walletAddresses as dynamic).getPaymentUri(amount: amount) as String;
+    } catch (_) {
+      // Fallback for wallets without a getPaymentUri method
+      final scheme = wallet.currency.title.toLowerCase();
+      uri = amount != null ? '$scheme:$address?amount=$amount' : address;
+    }
     return CommandResult.ok({'uri': uri, 'address': address});
   }
 }

@@ -8,6 +8,7 @@ import 'package:cw_mweb/mweb_ffi.dart';
 import 'package:cw_mweb/print_verbose.dart';
 import 'package:grpc/grpc.dart';
 import 'package:cw_core/root_dir.dart';
+import 'package:path_provider/path_provider.dart';
 import 'mwebd.pbgrpc.dart';
 
 class CwMweb {
@@ -52,7 +53,13 @@ class CwMweb {
 
   static Future<void> _initializeClient() async {
     printV("_initializeClient() called!");
-    final appDir = Directory(await getAppDir());
+    // Use root_dir override if set (headless), otherwise path_provider (Flutter)
+    final Directory appDir;
+    try {
+      appDir = Directory(await getAppDir());
+    } catch (_) {
+      appDir = await getApplicationSupportDirectory();
+    }
     const ltcNodeUri = "ltc-electrum.cakewallet.com:9333";
 
     String debugLogPath = "${appDir.path}/logs/debug.log";

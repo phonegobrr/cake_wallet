@@ -47,8 +47,16 @@ class ContactsScreen extends TuiScreen {
       ]);
     }
 
+    // Clamp selection after list changes
+    if (_contacts.isNotEmpty) {
+      _selectedIndex = _selectedIndex.clamp(0, _contacts.length - 1);
+    } else {
+      _selectedIndex = 0;
+    }
+
     // Viewport
     final availableHeight = (height - 6).clamp(1, _contacts.length);
+    _scrollOffset = _scrollOffset.clamp(0, (_contacts.length - 1).clamp(0, _contacts.length));
     if (_selectedIndex < _scrollOffset) {
       _scrollOffset = _selectedIndex;
     }

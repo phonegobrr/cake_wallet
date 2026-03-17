@@ -43,8 +43,8 @@ class CreateSwapCommand extends WalletCommand<SwapQuote> {
     try {
       final quote = await ctx.getSwapQuote!(from, to, amount);
       return CommandResult.ok(quote,
-          message: 'Trade created. Send ${quote.fromAmount} ${quote.fromCurrency} '
-              'to the deposit address.');
+          message: 'Quote obtained for swap $from -> $to. '
+              'Full trade creation requires exchange provider integration.');
     } catch (e) {
       return CommandResult.error('SWAP_CREATE_FAILED', message: e.toString());
     }

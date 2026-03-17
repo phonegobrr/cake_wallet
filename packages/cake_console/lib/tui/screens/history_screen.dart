@@ -48,8 +48,16 @@ class HistoryScreen extends TuiScreen {
       ]);
     }
 
+    // Clamp selection after list changes
+    if (_txs.isNotEmpty) {
+      _selectedIndex = _selectedIndex.clamp(0, _txs.length - 1);
+    } else {
+      _selectedIndex = 0;
+    }
+
     // Viewport: show only what fits
     final availableHeight = (height - 6).clamp(1, _txs.length);
+    _scrollOffset = _scrollOffset.clamp(0, (_txs.length - 1).clamp(0, _txs.length));
     if (_selectedIndex < _scrollOffset) {
       _scrollOffset = _selectedIndex;
     }
