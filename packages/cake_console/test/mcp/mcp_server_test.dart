@@ -1,6 +1,4 @@
-import 'dart:convert';
 import 'package:cake_headless/cake_headless.dart';
-import 'package:cake_console/mcp/mcp_server.dart';
 import 'package:test/test.dart';
 
 class _MockSecureStorage implements SecureStoragePort {
@@ -92,8 +90,7 @@ void main() {
       // Importing via cli/json_output.dart
       final data = {'a': 1, 'b': 'c'};
       final result = CommandResult.ok(data);
-      final json = result.toJson(
-          (d) => d is Map<String, dynamic> ? d : Map<String, dynamic>.from(d));
+      final json = result.toJson((d) => d);
       expect(json['data']['a'], 1);
     });
   });
