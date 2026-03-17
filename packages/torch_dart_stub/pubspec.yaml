@@ -1,0 +1,11 @@
+name: torch_dart
+description: Pure-Dart stub of torch_dart for headless builds (no native Tor)
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: '>=3.0.6 <4.0.0'
+
+dependencies:
+  ffi: ^2.0.0
+  path: ^1.9.0

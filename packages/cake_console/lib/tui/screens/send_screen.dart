@@ -5,6 +5,7 @@ import 'package:cake_console/tui/terminal_driver.dart';
 import 'package:cake_console/tui/screen.dart';
 
 class SendScreen implements TuiScreen {
+  // ignore: unused_field
   final CommandBus _bus;
   String _address = '';
   String _amount = '';

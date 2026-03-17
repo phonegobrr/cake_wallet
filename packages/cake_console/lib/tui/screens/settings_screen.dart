@@ -5,6 +5,7 @@ import 'package:cake_console/tui/terminal_driver.dart';
 import 'package:cake_console/tui/screen.dart';
 
 class SettingsScreen implements TuiScreen {
+  // ignore: unused_field
   final CommandBus _bus;
 
   SettingsScreen(this._bus);

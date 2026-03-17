@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:cake_headless/commands/command_bus.dart';
 import 'package:cake_headless/events/event_bus.dart';
-import 'package:cake_headless/runtime_context.dart';
 import 'package:cake_console/cli/json_output.dart';
 import 'package:cake_console/tui/tui_app.dart';
 import 'package:cake_console/mcp/mcp_server.dart';

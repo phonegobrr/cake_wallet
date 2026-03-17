@@ -14,3 +14,10 @@ dependencies:
 
 dev_dependencies:
   test: ^1.25.0
+  lints: ^5.1.1
+
+dependency_overrides:
+  torch_dart:
+    path: ../torch_dart_stub
+  cake_backup:
+    path: ../cake_backup_stub

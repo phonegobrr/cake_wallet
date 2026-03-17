@@ -1,0 +1,10 @@
+name: cake_backup
+description: Pure-Dart stub of cake_backup for headless builds
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: '>=3.0.6 <4.0.0'
+
+dependencies:
+  cryptography: ^2.0.5

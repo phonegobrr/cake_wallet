@@ -1,4 +1,4 @@
-library cake_headless;
+// Cake Headless - Pure-Dart headless application core for Cake Wallet
 
 // Ports
 export 'ports/secure_storage_port.dart';

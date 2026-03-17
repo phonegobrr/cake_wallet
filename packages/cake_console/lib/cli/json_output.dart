@@ -7,12 +7,14 @@ import 'package:cake_headless/commands/command_result.dart';
 void outputJson(CommandResult result) {
   final json = result.toJson((data) {
     if (data is Map) return data as Map<String, dynamic>;
-    if (data is List) return {'items': data.map((e) {
-      if (e is Map) return e;
-      final toJsonMethod = (e as dynamic).toJson;
-      if (toJsonMethod != null) return toJsonMethod();
-      return {'value': e.toString()};
-    }).toList()};
+    if (data is List) {
+      return {'items': data.map((e) {
+        if (e is Map) return e;
+        final toJsonMethod = (e as dynamic).toJson;
+        if (toJsonMethod != null) return toJsonMethod();
+        return {'value': e.toString()};
+      }).toList()};
+    }
     final toJsonMethod = (data as dynamic).toJson;
     if (toJsonMethod != null) return toJsonMethod() as Map<String, dynamic>;
     return {'value': data.toString()};

@@ -1,6 +1,5 @@
 import 'package:cake_headless/commands/command_bus.dart';
 import 'package:cake_headless/commands/wallet_commands.dart';
-import 'package:cake_headless/commands/send_commands.dart';
 import 'package:cake_headless/commands/receive_commands.dart';
 import 'package:cake_headless/commands/history_commands.dart';
 import 'package:cake_headless/commands/node_commands.dart';

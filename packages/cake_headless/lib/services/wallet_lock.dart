@@ -18,7 +18,7 @@ class WalletLock {
         'Close it first, or use a different --data-dir.',
       );
     }
-    _lockFile!.writeStringSync('${pid}\n');
+    _lockFile!.writeStringSync('$pid\n');
   }
 
   void release() {

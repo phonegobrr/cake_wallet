@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:args/command_runner.dart';
 import 'package:cake_headless/cake_headless.dart';
@@ -12,7 +13,7 @@ Future<void> main(List<String> args) async {
 
   final ctx = CakeRuntimeContext(
     secureStorage: FileSecureStorage(
-        '$appDir/.secure_storage', List.filled(32, 0)),
+        '$appDir/.secure_storage', Uint8List(32)),
     settings: JsonSettingsStore('$appDir/settings.json'),
     pathProvider: pathProvider,
     assetLoader: FilesystemAssetLoader('.'),

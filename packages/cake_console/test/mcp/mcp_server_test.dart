@@ -1,7 +1,4 @@
-import 'dart:convert';
-
 import 'package:cake_headless/cake_headless.dart';
-import 'package:cake_console/mcp/mcp_server.dart';
 import 'package:test/test.dart';
 
 void main() {
