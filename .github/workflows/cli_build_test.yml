@@ -1,7 +1,18 @@
 name: CLI/TUI Build & Test
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      - 'packages/**'
+      - 'cw_core/**'
+      - '.github/workflows/cli_build_test.yml'
+  pull_request:
+    paths:
+      - 'packages/**'
+      - 'cw_core/**'
+      - '.github/workflows/cli_build_test.yml'
+
 jobs:
-  build-test:
+  analyze-and-test:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
@@ -9,21 +20,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dart-lang/setup-dart@v1
+
+      - name: Prepare torch_dart (cw_core transitive dependency)
+        run: bash scripts/prepare_torch.sh
+
       - name: Get headless dependencies
         run: dart pub get
         working-directory: packages/cake_headless
+
+      - name: Analyze headless
+        run: dart analyze --fatal-infos
+        working-directory: packages/cake_headless
+
       - name: Run headless tests
         run: dart test
         working-directory: packages/cake_headless
+
       - name: Get console dependencies
         run: dart pub get
         working-directory: packages/cake_console
+
+      - name: Analyze console
+        run: dart analyze --fatal-infos
+        working-directory: packages/cake_console
+
       - name: Run console tests
         run: dart test
         working-directory: packages/cake_console
-      - name: Analyze headless
-        run: dart analyze
-        working-directory: packages/cake_headless
-      - name: Analyze console
-        run: dart analyze
+
+      - name: Verify binary compiles
+        run: dart compile exe bin/cake.dart -o build/cake
         working-directory: packages/cake_console
