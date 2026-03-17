@@ -119,19 +119,9 @@ class RotateAddressCommand extends WalletCommand<AddressEntry> {
     if (!ctx.hasWallet) {
       return CommandResult.error('NO_WALLET', message: ctx.strings.noWalletOpen);
     }
-    // Address rotation is wallet-type specific (subaddress vs new key)
-    // For wallets that support it, the primary address getter already
-    // returns the current unused subaddress
-    final wallet = ctx.wallet!;
-    final address = wallet.walletAddresses.address;
-    return CommandResult.ok(
-      AddressEntry(
-        address: address,
-        label: 'Current',
-        currencyTitle: wallet.currency.title,
-      ),
-      message: 'Current receive address (rotation requires wallet-type-specific logic)',
-    );
+    return CommandResult.error('SERVICE_UNAVAILABLE',
+        message: 'Address rotation requires wallet-type-specific subaddress generation. '
+            'Use receive.address for the current address.');
   }
 }
 

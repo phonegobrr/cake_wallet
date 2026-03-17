@@ -82,7 +82,7 @@ class SendAllCommand extends WalletCommand<SendResult> {
   @override
   String get name => 'send.send-all';
   @override
-  String get description => 'Send entire wallet balance to an address';
+  String get description => 'Send entire wallet balance to an address (sweep)';
   @override
   Map<String, CommandArg> get args => {
         'address': CommandArg(
@@ -108,20 +108,17 @@ class SendAllCommand extends WalletCommand<SendResult> {
           message: 'Address is required');
     }
 
-    // Get max sendable amount
-    final balanceMap = ctx.wallet!.balance;
-    if (balanceMap.isEmpty) {
-      return CommandResult.error('NO_BALANCE', message: 'No balance available');
-    }
-    final maxAmount = balanceMap.values.first.available.toString();
     final priority = params['priority']?.toString();
 
+    // Send-all/sweep requires wallet-type-specific credential building
+    // with a sendAll flag so fees are deducted from the output.
+    // The 'ALL' sentinel signals the runtime callback to use sweep mode.
     if (ctx.sendTransaction != null) {
       try {
-        final result = await ctx.sendTransaction!(address, maxAmount,
+        final result = await ctx.sendTransaction!(address, 'ALL',
             priority: priority);
         return CommandResult.ok(result,
-            message: 'Send-all transaction sent: ${result.txHash}');
+            message: 'Sweep transaction sent: ${result.txHash}');
       } catch (e) {
         return CommandResult.error('SEND_FAILED', message: e.toString());
       }

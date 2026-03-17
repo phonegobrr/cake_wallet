@@ -584,7 +584,7 @@ class SyncStopCommand extends WalletCommand<Map<String, String>> {
       return CommandResult.error('NO_WALLET', message: ctx.strings.noWalletOpen);
     }
     try {
-      ctx.wallet!.close(shouldCleanup: false);
+      ctx.wallet!.stopSync();
       return CommandResult.ok(
         {'status': 'stopped'},
         message: 'Synchronization stopped',
