@@ -1,3 +1,5 @@
+import 'package:cake_headless/dto/address_entry.dart';
+import 'package:cake_headless/dto/node_info.dart';
 import 'package:cake_headless/ports/secure_storage_port.dart';
 import 'package:cake_headless/ports/settings_store_port.dart';
 import 'package:cake_headless/ports/path_provider_port.dart';
@@ -35,6 +37,12 @@ class CakeRuntimeContext {
 
   /// Callback to load/open a wallet by name and type.
   Future<void> Function(String name, int walletTypeRaw)? loadWallet;
+
+  /// Callback to list configured nodes as DTOs.
+  Future<List<NodeInfo>> Function()? listNodes;
+
+  /// Callback to list contacts as DTOs.
+  Future<List<AddressEntry>> Function()? listContacts;
 
   CakeRuntimeContext({
     required this.secureStorage,

@@ -5,7 +5,7 @@ import 'package:cake_console/tui/terminal_driver.dart';
 import 'package:cake_console/tui/screen.dart';
 
 class ExchangeScreen implements TuiScreen {
-  // ignore: unused_field
+  // ignore: unused_field -- will be used when exchange is wired
   final CommandBus _bus;
 
   ExchangeScreen(this._bus);

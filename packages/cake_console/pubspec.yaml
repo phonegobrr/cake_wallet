@@ -19,6 +19,7 @@ dependencies:
   args: ^2.5.0
   cw_core:
     path: ../../cw_core
+  qr: ^3.0.2
 
 dev_dependencies:
   test: ^1.25.0

@@ -5,6 +5,9 @@ import 'package:cake_headless/commands/receive_commands.dart';
 import 'package:cake_headless/commands/history_commands.dart';
 import 'package:cake_headless/commands/node_commands.dart';
 import 'package:cake_headless/commands/settings_commands.dart';
+import 'package:cake_headless/commands/swap_commands.dart';
+import 'package:cake_headless/commands/contact_commands.dart';
+import 'package:cake_headless/commands/backup_commands.dart';
 import 'package:cake_headless/runtime_context.dart';
 import 'package:cake_headless/services/wallet_lock.dart';
 import 'package:cw_core/root_dir.dart';
@@ -19,15 +22,36 @@ Future<CommandBus> bootstrap(CakeRuntimeContext ctx) async {
 
   final bus = CommandBus(ctx);
 
-  // Register all commands
+  // Wallet
   bus.register(ListWalletsCommand());
   bus.register(GetBalanceCommand());
+
+  // Send / Receive
   bus.register(SendCommand());
   bus.register(GetReceiveAddressCommand());
+
+  // History
   bus.register(ListTransactionsCommand());
+
+  // Nodes
   bus.register(ListNodesCommand());
+
+  // Settings & Sync
   bus.register(ListSettingsCommand());
+  bus.register(SetSettingCommand());
   bus.register(GetSyncStatusCommand());
+
+  // Exchange / Swap
+  bus.register(GetSwapQuoteCommand());
+  bus.register(GetSwapStatusCommand());
+
+  // Contacts
+  bus.register(ListContactsCommand());
+  bus.register(AddContactCommand());
+
+  // Backup
+  bus.register(ExportBackupCommand());
+  bus.register(ImportBackupCommand());
 
   return bus;
 }

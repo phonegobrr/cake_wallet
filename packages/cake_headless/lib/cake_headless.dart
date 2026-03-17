@@ -26,6 +26,9 @@ export 'commands/receive_commands.dart';
 export 'commands/history_commands.dart';
 export 'commands/node_commands.dart';
 export 'commands/settings_commands.dart';
+export 'commands/swap_commands.dart';
+export 'commands/contact_commands.dart';
+export 'commands/backup_commands.dart';
 
 // DTOs
 export 'dto/wallet_summary.dart';

@@ -16,7 +16,11 @@ class ListNodesCommand extends WalletCommand<List<NodeInfo>> {
     CakeRuntimeContext ctx,
     Map<String, dynamic> params,
   ) async {
-    ctx.logger.info('Listing nodes...');
-    return CommandResult.ok(<NodeInfo>[], message: 'No nodes configured');
+    if (ctx.listNodes == null) {
+      return CommandResult.ok(<NodeInfo>[],
+          message: 'Node services not initialized');
+    }
+    final nodes = await ctx.listNodes!();
+    return CommandResult.ok(nodes);
   }
 }

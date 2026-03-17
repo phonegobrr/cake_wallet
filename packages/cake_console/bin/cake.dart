@@ -23,14 +23,37 @@ Future<void> main(List<String> args) async {
 
   // Build command bus and register all commands
   final bus = CommandBus(ctx);
+
+  // Wallet
   bus.register(ListWalletsCommand());
   bus.register(GetBalanceCommand());
+
+  // Send / Receive
   bus.register(SendCommand());
   bus.register(GetReceiveAddressCommand());
+
+  // History
   bus.register(ListTransactionsCommand());
+
+  // Nodes
   bus.register(ListNodesCommand());
+
+  // Settings & Sync
   bus.register(ListSettingsCommand());
+  bus.register(SetSettingCommand());
   bus.register(GetSyncStatusCommand());
+
+  // Exchange / Swap
+  bus.register(GetSwapQuoteCommand());
+  bus.register(GetSwapStatusCommand());
+
+  // Contacts
+  bus.register(ListContactsCommand());
+  bus.register(AddContactCommand());
+
+  // Backup
+  bus.register(ExportBackupCommand());
+  bus.register(ImportBackupCommand());
 
   // Build CLI runner
   final runner = CommandRunner<void>('cake', 'Cake Wallet CLI/TUI')
@@ -89,6 +112,27 @@ Future<void> main(List<String> args) async {
       name: 'sync-status',
       description: 'Show sync status',
       headlessCommand: 'sync.status',
+      bus: bus,
+      isJsonMode: () => _isJson(args),
+    ))
+    ..addCommand(HeadlessCliCommand(
+      name: 'swap',
+      description: 'Get exchange quote',
+      headlessCommand: 'swap.quote',
+      bus: bus,
+      isJsonMode: () => _isJson(args),
+    ))
+    ..addCommand(HeadlessCliCommand(
+      name: 'contacts',
+      description: 'Contact management',
+      headlessCommand: 'contacts.list',
+      bus: bus,
+      isJsonMode: () => _isJson(args),
+    ))
+    ..addCommand(HeadlessCliCommand(
+      name: 'backup',
+      description: 'Backup management',
+      headlessCommand: 'backup.export',
       bus: bus,
       isJsonMode: () => _isJson(args),
     ));
