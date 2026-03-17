@@ -15,7 +15,6 @@ import 'package:cw_wownero/api/exceptions/wallet_opening_exception.dart';
 import 'package:cw_wownero/api/wallet_manager.dart' as wownero_wallet_manager;
 import 'package:cw_wownero/api/wallet_manager.dart';
 import 'package:cw_wownero/wownero_wallet.dart';
-import 'package:flutter/widgets.dart';
 import 'package:hive/hive.dart';
 import 'package:polyseed/polyseed.dart';
 import 'package:monero/wownero.dart' as wownero;
@@ -176,7 +175,7 @@ class WowneroWalletService extends WalletService<
           !invalidSignature &&
           wallet != null &&
           wallet.onError != null) {
-        wallet.onError!(FlutterErrorDetails(exception: e, stack: s));
+        wallet.onError!(e, s);
       }
 
       await restoreOrResetWalletFiles(name);

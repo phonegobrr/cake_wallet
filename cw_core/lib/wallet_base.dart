@@ -4,7 +4,6 @@ import 'package:cw_core/transaction_info.dart';
 import 'package:cw_core/transaction_history.dart';
 import 'package:cw_core/transaction_priority.dart';
 import 'package:cw_core/wallet_addresses.dart';
-import 'package:flutter/foundation.dart';
 import 'package:cw_core/wallet_info.dart';
 import 'package:cw_core/pending_transaction.dart';
 import 'package:cw_core/currency_for_wallet_type.dart';
@@ -115,7 +114,7 @@ abstract class WalletBase<BalanceType extends Balance, HistoryType extends Trans
   Future<void>? updateBalance();
   Future<void> updateTransactionsHistory() async {}
 
-  void setExceptionHandler(void Function(FlutterErrorDetails) onError) => null;
+  void setExceptionHandler(void Function(Object error, StackTrace? stackTrace) onError) => null;
 
   Future<void> renameWalletFiles(String newWalletName);
 

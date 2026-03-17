@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math';
-import 'package:flutter/foundation.dart';
+
+const bool kDebugMode = !bool.fromEnvironment('dart.vm.product');
 
 enum LogLevel { info, debug, warn, error }
 

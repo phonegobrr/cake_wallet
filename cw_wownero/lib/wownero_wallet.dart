@@ -36,7 +36,6 @@ import 'package:cw_wownero/wownero_transaction_history.dart';
 import 'package:cw_wownero/wownero_transaction_info.dart';
 import 'package:cw_wownero/wownero_unspent.dart';
 import 'package:cw_wownero/wownero_wallet_addresses.dart';
-import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
 import 'package:monero/wownero.dart' as wownero;
@@ -95,7 +94,7 @@ abstract class WowneroWalletBase
 
   Box<UnspentCoinsInfo> unspentCoinsInfo;
 
-  void Function(FlutterErrorDetails)? onError;
+  void Function(Object error, StackTrace? stackTrace)? onError;
 
   @override
   late WowneroWalletAddresses walletAddresses;
@@ -540,11 +539,7 @@ abstract class WowneroWalletBase
       _askForUpdateBalance();
     } catch (e, s) {
       printV(e.toString());
-      onError?.call(FlutterErrorDetails(
-        exception: e,
-        stack: s,
-        library: this.runtimeType.toString(),
-      ));
+      onError?.call(e, s);
     }
   }
 
@@ -783,7 +778,7 @@ abstract class WowneroWalletBase
   }
 
   @override
-  void setExceptionHandler(void Function(FlutterErrorDetails) e) => onError = e;
+  void setExceptionHandler(void Function(Object error, StackTrace? stackTrace) e) => onError = e;
 
   @override
   Future<String> signMessage(String message, {String? address}) async {

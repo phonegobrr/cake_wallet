@@ -46,7 +46,6 @@ import 'package:cw_core/wallet_base.dart';
 import 'package:cw_core/wallet_info.dart';
 import 'package:cw_core/wallet_keys_file.dart';
 import 'package:cw_core/wallet_type.dart';
-import 'package:flutter/foundation.dart';
 import 'package:hex/hex.dart';
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
@@ -350,7 +349,7 @@ abstract class ElectrumWalletBase
   bool _isTransactionUpdating;
   Future<Isolate>? _isolate;
 
-  void Function(FlutterErrorDetails)? _onError;
+  void Function(Object error, StackTrace? stackTrace)? _onError;
   Timer? _autoSaveTimer;
   StreamSubscription<dynamic>? _receiveStream;
   Timer? _updateFeeRateTimer;
@@ -2387,11 +2386,7 @@ abstract class ElectrumWalletBase
 
       return historiesWithDetails;
     } catch (e, stacktrace) {
-      _onError?.call(FlutterErrorDetails(
-        exception: "$txid - $e",
-        stack: stacktrace,
-        library: this.runtimeType.toString(),
-      ));
+      _onError?.call("$txid - $e", stacktrace);
       return {};
     }
   }
@@ -2465,11 +2460,7 @@ abstract class ElectrumWalletBase
           await _fetchAddressHistory(address, await getCurrentChainTip());
         } catch (e, s) {
           printV("sub error: $e");
-          _onError?.call(FlutterErrorDetails(
-            exception: e,
-            stack: s,
-            library: this.runtimeType.toString(),
-          ));
+          _onError?.call(e, s);
         }
       }, onError: (e, s) {
         printV("sub_listen error: $e $s");
@@ -2583,7 +2574,7 @@ abstract class ElectrumWalletBase
   }
 
   @override
-  void setExceptionHandler(void Function(FlutterErrorDetails) onError) => _onError = onError;
+  void setExceptionHandler(void Function(Object error, StackTrace? stackTrace) onError) => _onError = onError;
 
   @override
   Future<String> signMessage(String message, {String? address = null}) async {

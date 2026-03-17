@@ -6,7 +6,7 @@ import 'package:cw_core/hive_type_ids.dart';
 import 'package:cw_core/utils/print_verbose.dart';
 import 'package:cw_core/wallet_info_legacy.dart' as wiLegacy;
 import 'package:cw_core/wallet_type.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 Future<void> performHiveMigration() async {
   try {

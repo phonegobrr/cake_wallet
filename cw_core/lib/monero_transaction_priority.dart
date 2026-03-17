@@ -1,5 +1,5 @@
 import 'package:cw_core/transaction_priority.dart';
-import 'package:flutter/foundation.dart';
+import 'package:cw_core/utils/print_verbose.dart';
 
 class MoneroTransactionPriority extends TransactionPriority {
   const MoneroTransactionPriority({required String title, required int raw})

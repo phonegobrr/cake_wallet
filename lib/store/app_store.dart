@@ -5,6 +5,7 @@ import 'package:cake_wallet/reactions/wallet_connect.dart';
 import 'package:cake_wallet/src/screens/wallet_connect/services/walletkit_service.dart';
 import 'package:cake_wallet/themes/core/theme_store.dart';
 import 'package:cake_wallet/utils/exception_handler.dart';
+import 'package:flutter/foundation.dart';
 import 'package:cw_core/transaction_info.dart';
 import 'package:cw_core/wallet_type.dart';
 import 'package:mobx/mobx.dart';
@@ -63,7 +64,8 @@ abstract class AppStoreBase with Store {
     bool changingToSameWalletType = this.wallet?.type == wallet.type;
     this.wallet?.close(shouldCleanup: !changingToSameWalletType);
     this.wallet = wallet;
-    this.wallet!.setExceptionHandler(ExceptionHandler.onError);
+    this.wallet!.setExceptionHandler((error, stackTrace) =>
+        ExceptionHandler.onError(FlutterErrorDetails(exception: error, stack: stackTrace)));
 
     if (isWalletConnectCompatibleChain(wallet.type)) {
       await getIt.get<WalletKitService>().onDispose();

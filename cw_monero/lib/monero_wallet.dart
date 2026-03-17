@@ -38,7 +38,6 @@ import 'package:cw_monero/monero_unspent.dart';
 import 'package:cw_monero/monero_wallet_addresses.dart';
 import 'package:cw_monero/monero_wallet_service.dart';
 import 'package:cw_monero/pending_monero_transaction.dart';
-import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:ledger_flutter_plus/ledger_flutter_plus.dart';
 import 'package:mobx/mobx.dart';
@@ -103,7 +102,7 @@ abstract class MoneroWalletBase extends WalletBase<MoneroBalance,
 
   Box<UnspentCoinsInfo> unspentCoinsInfo;
 
-  void Function(FlutterErrorDetails)? onError;
+  void Function(Object error, StackTrace? stackTrace)? onError;
 
   @override
   late MoneroWalletAddresses walletAddresses;
@@ -690,11 +689,7 @@ abstract class MoneroWalletBase extends WalletBase<MoneroBalance,
       _askForUpdateBalance();
     } catch (e, s) {
       printV(e.toString());
-      onError?.call(FlutterErrorDetails(
-        exception: e,
-        stack: s,
-        library: this.runtimeType.toString(),
-      ));
+      onError?.call(e, s);
     }
   }
 
@@ -963,7 +958,7 @@ abstract class MoneroWalletBase extends WalletBase<MoneroBalance,
   }
 
   @override
-  void setExceptionHandler(void Function(FlutterErrorDetails) e) => onError = e;
+  void setExceptionHandler(void Function(Object error, StackTrace? stackTrace) e) => onError = e;
 
   @override
   Future<String> signMessage(String message, {String? address}) async {

@@ -1,6 +1,7 @@
 import 'dart:convert';
-import 'dart:developer' as dev;
 import 'dart:io';
+
+import 'package:cw_core/utils/print_verbose.dart';
 
 import 'package:cw_core/balance.dart';
 import 'package:cw_core/encryption_file_utils.dart';
@@ -25,7 +26,7 @@ mixin WalletKeysFile<BalanceType extends Balance, HistoryType extends Transactio
     try {
       final rootPath = await makeKeysFilePath();
       final path = "$rootPath${isBackup ? ".backup" : ""}";
-      dev.log("Saving .keys file '$path'");
+      printV("Saving .keys file '$path'");
       await encryptionFileUtils.write(
           path: path, password: password, data: walletKeysData.toJSON());
     } catch (_) {}
@@ -38,12 +39,12 @@ mixin WalletKeysFile<BalanceType extends Balance, HistoryType extends Transactio
       final rootPath = await pathForWallet(name: name, type: type);
       final path = "$rootPath.keys";
 
-      dev.log("Saving .keys file '$path'");
+      printV("Saving .keys file '$path'");
       await encryptionFileUtils.write(
           path: path, password: password, data: walletKeysData.toJSON());
 
       if (withBackup) {
-        dev.log("Saving .keys.backup file '$path.backup'");
+        printV("Saving .keys.backup file '$path.backup'");
         await encryptionFileUtils.write(
             path: "$path.backup", password: password, data: walletKeysData.toJSON());
       }
@@ -75,7 +76,7 @@ mixin WalletKeysFile<BalanceType extends Balance, HistoryType extends Transactio
       final data = json.decode(jsonSource) as Map<String, dynamic>;
       return WalletKeysData.fromJSON(data);
     } catch (e) {
-      dev.log("Failed to read .keys file. Trying .keys.backup file...");
+      printV("Failed to read .keys file. Trying .keys.backup file...");
 
       readPath = "$readPath.backup";
       if (!File(readPath).existsSync())
@@ -85,7 +86,7 @@ mixin WalletKeysFile<BalanceType extends Balance, HistoryType extends Transactio
       final data = json.decode(jsonSource) as Map<String, dynamic>;
       final keysData = WalletKeysData.fromJSON(data);
 
-      dev.log("Restoring .keys from .keys.backup");
+      printV("Restoring .keys from .keys.backup");
       createKeysFile(name, type, password, keysData, encryptionFileUtils, false);
       return keysData;
     }

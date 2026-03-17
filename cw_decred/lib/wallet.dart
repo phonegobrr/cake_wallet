@@ -10,7 +10,6 @@ import 'package:cw_core/wallet_type.dart';
 import 'package:cw_decred/amount_format.dart';
 import 'package:cw_decred/pending_transaction.dart';
 import 'package:cw_decred/transaction_credentials.dart';
-import 'package:flutter/foundation.dart';
 import 'package:mobx/mobx.dart';
 import 'package:hive/hive.dart';
 
@@ -597,7 +596,7 @@ abstract class DecredWalletBase
   Future<bool> checkNodeHealth() async => await checkSync();
 
   @override
-  void setExceptionHandler(void Function(FlutterErrorDetails) onError) => onError;
+  void setExceptionHandler(void Function(Object error, StackTrace? stackTrace) onError) => onError;
 
   Future<void> renameWalletFiles(String newWalletName) async {
     final currentDirPath = await pathForWalletDir(name: walletInfo.name, type: type);
