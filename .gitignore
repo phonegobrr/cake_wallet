@@ -3,6 +3,9 @@
 *.log
 *.pyc
 *.swp
+
+# Local dependency overrides (per-developer, not committed)
+**/pubspec_overrides.yaml
 .DS_Store
 .atom/
 .buildlog/
