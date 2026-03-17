@@ -78,3 +78,35 @@ Do not commit absolute path dependencies.
 4. CLI and MCP exposure is automatic
 5. Add a TUI screen path if applicable
 6. Update `docs/headless_feature_matrix.md`
+
+## Implementation Rules
+
+These rules apply to all headless/TUI/MCP development:
+
+- Use `bootstrap.dart` and `docs/headless_feature_matrix.md` as the canonical feature inventory.
+- No feature is done until it has shared command implementation, CLI, MCP, and TUI exposure — or an explicit `UNSUPPORTED_ON_PLATFORM` / `INTERACTION_REQUIRED` contract.
+- Do not duplicate logic across TUI/CLI/MCP/API; implement once in the shared headless service layer via `CommandBus`.
+- During TUI work, use the local dart_lipgloss checkout via `pubspec_overrides.yaml`; never commit an absolute path dependency.
+- Prefer official MCP lifecycle/tools/transport semantics when modifying the MCP server.
+- Do not leave placeholder success paths — return structured error codes (`SERVICE_UNAVAILABLE`, `UNSUPPORTED_ON_PLATFORM`, `INTERACTION_REQUIRED`).
+- Keep stdout protocol-clean in MCP mode. All debug/log output goes to stderr.
+- Commands that mutate wallet state must set `isSafeForNonInteractive => false`.
+- Use `.toString()` on all command params from MCP (JSON numbers arrive as `int`/`double`, not `String`).
+- Asset/native-lib resolution for compiled binaries: use `FilesystemAssetLoader` multi-path search (base, exe-relative, app-dir, cwd).
+- `CliPathProvider` delegates to `cw_core/root_dir.dart` for path consistency with the main app.
+
+## Interactive vs Non-Interactive
+
+| Mode | Interactive? | Notes |
+|------|-------------|-------|
+| TUI | Yes | Full keyboard input, `capturesInput` screens |
+| CLI | No (default) | Pass `--yes` to auto-confirm unsafe commands |
+| CLI `--yes` | No + autoConfirm | Unsafe commands execute without prompting |
+| MCP | No | `NoOpUserInteraction` rejects all prompts; all args via JSON |
+
+## Future Transports
+
+The `CommandBus` is transport-neutral. Planned additions:
+- HTTP API server (via `dart:shelf`) — same command dispatch, REST/JSON endpoints
+- WebSocket daemon — long-lived process, event streaming via `WalletEventBus`
+- MCP reactive notifications — subscribe to `WalletEventBus` for push updates
