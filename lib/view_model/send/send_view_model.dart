@@ -936,6 +936,23 @@ abstract class SendViewModelBase extends WalletChangeListenerViewModel with Stor
     }
   }
 
+  /// Headless transaction commit — no BuildContext, no UR QR navigation.
+  /// Directly commits the pending transaction without UI interaction.
+  @action
+  Future<void> commitTransactionHeadless() async {
+    if (pendingTransaction == null) {
+      throw StateError('No pending transaction to commit');
+    }
+
+    try {
+      state = TransactionCommitting();
+      await pendingTransaction!.commit();
+      state = TransactionCommitted();
+    } catch (e) {
+      state = FailureState(e.toString());
+    }
+  }
+
   @action
   Future<void> commitTransaction(BuildContext context) async {
     if (pendingTransaction == null) {

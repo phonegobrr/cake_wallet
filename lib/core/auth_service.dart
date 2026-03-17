@@ -86,6 +86,17 @@ class AuthService with Store {
     return walletName.isNotEmpty && password.isNotEmpty;
   }
 
+  /// Pure authentication check — no navigation, no UI.
+  /// Returns true if the provided PIN matches the stored PIN.
+  /// Does NOT handle duress pin (headless callers should not trigger wipe).
+  Future<bool> authenticateHeadless(String pin) async {
+    final regularKey = generateStoreKeyFor(key: SecretStoreKey.pinCodePassword);
+    final encodedRegularPin = await secureStorage.read(key: regularKey);
+    if (encodedRegularPin == null || encodedRegularPin.isEmpty) return false;
+    final decodedRegularPin = decodedPinCode(pin: encodedRegularPin);
+    return decodedRegularPin == pin;
+  }
+
   Future<bool> authenticate(String pin) async {
     final regularKey = generateStoreKeyFor(key: SecretStoreKey.pinCodePassword);
     final encodedRegularPin = await secureStorage.read(key: regularKey);

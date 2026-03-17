@@ -503,6 +503,80 @@ class AddressResolver {
     return ParsedAddress(addresses: [text]);
   }
 
+  /// Headless address resolution — no BuildContext required.
+  /// Skips UI-dependent operations (BIP353 choice dialogs, Nostr relay queries).
+  /// For BIP353 with multiple candidates, uses [addressPicker] callback or
+  /// takes the first result.
+  Future<ParsedAddress> resolveHeadless(
+    String text,
+    CryptoCurrency currency, {
+    Future<String?> Function(String domain, Map<String, String> choices)? addressPicker,
+  }) async {
+    final ticker = currency.title;
+    try {
+      // OpenAlias resolution (no BuildContext needed)
+      final formattedName = OpenaliasRecord.formatDomainName(text);
+      final domainParts = formattedName.split('.');
+      final name = domainParts.last;
+
+      if (domainParts.length <= 1 || domainParts.first.isEmpty || name.isEmpty) {
+        return ParsedAddress(addresses: [text]);
+      }
+
+      // Unstoppable domains
+      if (unstoppableDomains.any((domain) => name.trim() == domain)) {
+        if (settingsStore.lookupsUnstoppableDomains) {
+          final address = await fetchUnstoppableDomainAddress(text, ticker);
+          if (address.isNotEmpty) {
+            return ParsedAddress.fetchUnstoppableDomainAddress(address: address, name: text);
+          }
+        }
+      }
+
+      // BIP353 — use callback instead of BuildContext dialog
+      final bip353AddressMap = await Bip353Record.fetchUriByCryptoCurrency(text, ticker);
+      if (bip353AddressMap != null && bip353AddressMap.isNotEmpty) {
+        String? chosenAddress;
+        if (bip353AddressMap.length == 1) {
+          chosenAddress = bip353AddressMap.values.first;
+        } else if (addressPicker != null) {
+          chosenAddress = await addressPicker(text, bip353AddressMap);
+        } else {
+          chosenAddress = bip353AddressMap.values.first;
+        }
+        if (chosenAddress != null) {
+          return ParsedAddress.fetchBip353AddressAddress(address: chosenAddress, name: text);
+        }
+      }
+
+      // ENS
+      if (text.endsWith(".eth")) {
+        if (settingsStore.lookupsENS) {
+          final address = await EnsRecord.fetchEnsAddress(text, wallet: wallet);
+          if (address.isNotEmpty && address != "0x0000000000000000000000000000000000000000") {
+            return ParsedAddress.fetchEnsAddress(name: text, address: address);
+          }
+        }
+      }
+
+      // OpenAlias
+      if (formattedName.contains(".")) {
+        if (settingsStore.lookupsOpenAlias) {
+          final txtRecord = await OpenaliasRecord.lookupOpenAliasRecord(formattedName);
+          if (txtRecord != null) {
+            final record = await OpenaliasRecord.fetchAddressAndName(
+                formattedName: formattedName, ticker: ticker.toLowerCase(), txtRecord: txtRecord);
+            return ParsedAddress.fetchOpenAliasAddress(record: record, name: text);
+          }
+        }
+      }
+    } catch (e) {
+      printV(e.toString());
+    }
+
+    return ParsedAddress(addresses: [text]);
+  }
+
   Future<String?> _fetchZcashAddress(String handle) async {
     final url = Uri.parse('https://zcash.me/$handle');
 

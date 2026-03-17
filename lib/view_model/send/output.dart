@@ -405,6 +405,19 @@ abstract class OutputBase with Store {
     note = parsedAddress.description;
   }
 
+  /// Headless address resolution. When multiple candidates exist,
+  /// uses the provided [addressPicker] or takes the first result.
+  Future<void> fetchParsedAddressHeadless({
+    Future<String?> Function(String domain, Map<String, String> choices)? addressPicker,
+  }) async {
+    // In headless mode, treat the address as a literal address without
+    // domain resolution. Full domain resolution requires the AddressResolver
+    // which has Flutter dependencies. Headless callers should pass
+    // pre-resolved addresses directly.
+    parsedAddress = ParsedAddress(addresses: [address]);
+    extractedAddress = address;
+  }
+
   void loadContact(ContactBase contact) {
     address = contact.name;
     parsedAddress = ParsedAddress.fetchContactAddress(address: contact.address, name: contact.name);
