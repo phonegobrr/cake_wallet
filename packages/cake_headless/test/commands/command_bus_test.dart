@@ -41,20 +41,76 @@ class _TestCommand extends WalletCommand<String> {
   }
 }
 
+class _ThrowingCommand extends WalletCommand<String> {
+  @override
+  String get name => 'test.throw';
+  @override
+  String get description => 'Always throws';
+  @override
+  Map<String, CommandArg> get args => {};
+
+  @override
+  Future<CommandResult<String>> execute(
+      CakeRuntimeContext ctx, Map<String, dynamic> params) async {
+    throw StateError('intentional failure');
+  }
+}
+
+class _UnsafeCommand extends WalletCommand<String> {
+  @override
+  String get name => 'test.unsafe';
+  @override
+  String get description => 'Unsafe for non-interactive';
+  @override
+  Map<String, CommandArg> get args => {};
+  @override
+  bool get isSafeForNonInteractive => false;
+
+  @override
+  Future<CommandResult<String>> execute(
+      CakeRuntimeContext ctx, Map<String, dynamic> params) async {
+    return CommandResult.ok('executed');
+  }
+}
+
+class _DefaultArgCommand extends WalletCommand<String> {
+  @override
+  String get name => 'test.defaults';
+  @override
+  String get description => 'Has default args';
+  @override
+  Map<String, CommandArg> get args => {
+        'value': CommandArg(
+            name: 'value',
+            description: 'A value with default',
+            defaultValue: 'fallback'),
+      };
+
+  @override
+  Future<CommandResult<String>> execute(
+      CakeRuntimeContext ctx, Map<String, dynamic> params) async {
+    return CommandResult.ok(params['value']?.toString() ?? 'null');
+  }
+}
+
+CakeRuntimeContext _makeCtx() {
+  return CakeRuntimeContext(
+    secureStorage: _MockSecureStorage(),
+    settings: JsonSettingsStore('/tmp/test_settings_${DateTime.now().millisecondsSinceEpoch}.json'),
+    pathProvider: CliPathProvider(),
+    assetLoader: FilesystemAssetLoader('.'),
+    logger: StderrLogger(),
+    interaction: StdinUserInteraction(autoConfirm: true),
+  );
+}
+
 void main() {
   group('CommandBus', () {
     late CakeRuntimeContext ctx;
     late CommandBus bus;
 
     setUp(() {
-      ctx = CakeRuntimeContext(
-        secureStorage: _MockSecureStorage(),
-        settings: JsonSettingsStore('/tmp/test_settings.json'),
-        pathProvider: CliPathProvider(),
-        assetLoader: FilesystemAssetLoader('.'),
-        logger: StderrLogger(),
-        interaction: StdinUserInteraction(autoConfirm: true),
-      );
+      ctx = _makeCtx();
       bus = CommandBus(ctx);
     });
 
@@ -81,6 +137,64 @@ void main() {
     test('prevents duplicate registration', () {
       bus.register(_TestCommand());
       expect(() => bus.register(_TestCommand()), throwsStateError);
+    });
+
+    test('catches exceptions from commands', () async {
+      bus.register(_ThrowingCommand());
+      final result = await bus.dispatch('test.throw', {});
+      expect(result.success, isFalse);
+      expect(result.errorCode, 'COMMAND_FAILED');
+      expect(result.message, contains('intentional failure'));
+    });
+
+    test('applies default values for missing optional args', () async {
+      bus.register(_DefaultArgCommand());
+      final result = await bus.dispatch('test.defaults', {});
+      expect(result.success, isTrue);
+      expect(result.data, 'fallback');
+    });
+
+    test('explicit arg overrides default', () async {
+      bus.register(_DefaultArgCommand());
+      final result = await bus.dispatch('test.defaults', {'value': 'custom'});
+      expect(result.success, isTrue);
+      expect(result.data, 'custom');
+    });
+
+    test('enforces isSafeForNonInteractive', () async {
+      ctx.nonInteractive = true;
+      ctx.autoConfirm = false;
+      bus.register(_UnsafeCommand());
+      final result = await bus.dispatch('test.unsafe', {});
+      expect(result.success, isFalse);
+      expect(result.errorCode, 'INTERACTION_REQUIRED');
+    });
+
+    test('allows unsafe commands with autoConfirm', () async {
+      ctx.nonInteractive = true;
+      ctx.autoConfirm = true;
+      bus.register(_UnsafeCommand());
+      final result = await bus.dispatch('test.unsafe', {});
+      expect(result.success, isTrue);
+      expect(result.data, 'executed');
+    });
+
+    test('lists all registered commands', () {
+      bus.register(_TestCommand());
+      bus.register(_ThrowingCommand());
+      expect(bus.commands.length, 2);
+      expect(bus.commands.map((c) => c.name).toSet(),
+          {'test.echo', 'test.throw'});
+    });
+
+    test('getCommand returns null for unknown', () {
+      expect(bus.getCommand('nope'), isNull);
+    });
+
+    test('getCommand returns registered command', () {
+      bus.register(_TestCommand());
+      expect(bus.getCommand('test.echo'), isNotNull);
+      expect(bus.getCommand('test.echo')!.name, 'test.echo');
     });
   });
 }
