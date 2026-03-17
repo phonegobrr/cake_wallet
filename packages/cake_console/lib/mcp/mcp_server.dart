@@ -29,6 +29,22 @@ class McpServer {
     }
   }
 
+  static Map<String, dynamic> _serializeData(dynamic data) {
+    if (data is Map) return Map<String, dynamic>.from(data);
+    if (data is List) {
+      return {
+        'items': data.map((e) => _serializeData(e)).toList(),
+      };
+    }
+    try {
+      final result = (data as dynamic).toJson();
+      if (result is Map<String, dynamic>) return result;
+      return {'value': result.toString()};
+    } catch (_) {
+      return {'value': data.toString()};
+    }
+  }
+
   Future<Map<String, dynamic>> _handleRequest(
       Map<String, dynamic> request) async {
     final id = request['id'];
@@ -54,12 +70,7 @@ class McpServer {
           'content': [
             {
               'type': 'text',
-              'text': jsonEncode(result.toJson((d) {
-                if (d is Map) return d as Map<String, dynamic>;
-                final toJson = (d as dynamic).toJson;
-                if (toJson != null) return toJson() as Map<String, dynamic>;
-                return {'value': d.toString()};
-              })),
+              'text': jsonEncode(result.toJson(_serializeData)),
             }
           ],
         },
