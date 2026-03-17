@@ -7,7 +7,7 @@ import 'dart:typed_data';
 import 'package:cw_mweb/mweb_ffi.dart';
 import 'package:cw_mweb/print_verbose.dart';
 import 'package:grpc/grpc.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:cw_core/root_dir.dart';
 import 'mwebd.pbgrpc.dart';
 
 class CwMweb {
@@ -52,7 +52,7 @@ class CwMweb {
 
   static Future<void> _initializeClient() async {
     printV("_initializeClient() called!");
-    final appDir = await getApplicationSupportDirectory();
+    final appDir = Directory(await getAppDir());
     const ltcNodeUri = "ltc-electrum.cakewallet.com:9333";
 
     String debugLogPath = "${appDir.path}/logs/debug.log";
