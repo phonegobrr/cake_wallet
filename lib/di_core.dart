@@ -35,6 +35,20 @@ import 'package:cw_core/unspent_coins_info.dart';
 import 'package:cw_core/wallet_info.dart';
 import 'package:cw_core/wallet_service.dart';
 import 'package:cw_core/wallet_type.dart';
+import 'package:cake_wallet/monero/monero.dart';
+import 'package:cake_wallet/bitcoin/bitcoin.dart';
+import 'package:cake_wallet/bitcoin_cash/bitcoin_cash.dart';
+import 'package:cake_wallet/haven/haven.dart';
+import 'package:cake_wallet/evm/evm.dart';
+import 'package:cake_wallet/solana/solana.dart';
+import 'package:cake_wallet/tron/tron.dart';
+import 'package:cake_wallet/nano/nano.dart';
+import 'package:cake_wallet/wownero/wownero.dart';
+import 'package:cake_wallet/zano/zano.dart';
+import 'package:cake_wallet/decred/decred.dart';
+import 'package:cake_wallet/zcash/zcash.dart';
+import 'package:cake_wallet/dogecoin/dogecoin.dart';
+import 'package:cake_wallet/haven/cw_haven.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -120,6 +134,19 @@ Future<void> setupCore({
             settingsStore: getIt.get<SettingsStore>(),
           ));
 
+  // WalletService factory — enables WalletLoadingService in headless mode.
+  // In Flutter's di.dart this is also registered; the guard prevents double-registration.
+  if (!getIt.isRegistered<WalletService>(param1: WalletType.monero)) {
+    getIt.registerFactoryParam<WalletService, WalletType, void>(
+        (WalletType param1, __) {
+      return _createWalletService(
+        param1,
+        unspentCoinsInfoSource,
+        payjoinSessionSource,
+      );
+    });
+  }
+
   getIt.registerFactory<WalletLoadingService>(() => WalletLoadingService(
       getIt.get<SharedPreferences>(),
       getIt.get<KeyService>(),
@@ -149,4 +176,68 @@ Future<void> setupCore({
     appStore: getIt.get<AppStore>(),
     preferences: getIt.get<SharedPreferences>(),
   ));
+}
+
+/// Creates the appropriate WalletService for the given wallet type.
+/// Shared between di.dart (Flutter) and di_core.dart (headless).
+WalletService _createWalletService(
+  WalletType type,
+  Box<UnspentCoinsInfo> unspentCoinsInfoSource,
+  Box<PayjoinSession> payjoinSessionSource,
+) {
+  switch (type) {
+    case WalletType.monero:
+      return monero!.createMoneroWalletService(unspentCoinsInfoSource);
+    case WalletType.bitcoin:
+      return bitcoin!.createBitcoinWalletService(
+        unspentCoinsInfoSource,
+        payjoinSessionSource,
+        SettingsStoreBase.walletPasswordDirectInput,
+      );
+    case WalletType.litecoin:
+      return bitcoin!.createLitecoinWalletService(
+        unspentCoinsInfoSource,
+        SettingsStoreBase.walletPasswordDirectInput,
+      );
+    case WalletType.ethereum:
+    case WalletType.polygon:
+    case WalletType.base:
+    case WalletType.arbitrum:
+    case WalletType.bsc:
+      return evm!.createEVMWalletService(
+          type, SettingsStoreBase.walletPasswordDirectInput);
+    case WalletType.bitcoinCash:
+      return bitcoinCash!.createBitcoinCashWalletService(
+          unspentCoinsInfoSource,
+          SettingsStoreBase.walletPasswordDirectInput);
+    case WalletType.dogecoin:
+      return dogecoin!.createDogeCoinWalletService(
+          unspentCoinsInfoSource,
+          SettingsStoreBase.walletPasswordDirectInput);
+    case WalletType.nano:
+    case WalletType.banano:
+      return nano!
+          .createNanoWalletService(SettingsStoreBase.walletPasswordDirectInput);
+    case WalletType.solana:
+      return solana!.createSolanaWalletService(
+          SettingsStoreBase.walletPasswordDirectInput);
+    case WalletType.tron:
+      return tron!.createTronWalletService(
+          SettingsStoreBase.walletPasswordDirectInput);
+    case WalletType.wownero:
+      return wownero!
+          .createWowneroWalletService(unspentCoinsInfoSource);
+    case WalletType.zano:
+      return zano!.createZanoWalletService();
+    case WalletType.decred:
+      return decred!.createDecredWalletService(unspentCoinsInfoSource);
+    case WalletType.haven:
+      return HavenWalletService();
+    case WalletType.zcash:
+      return zcash!.createZcashWalletService(
+          SettingsStoreBase.walletPasswordDirectInput);
+    case WalletType.none:
+      throw Exception(
+          'Unexpected wallet type: ${type.toString()} for WalletService');
+  }
 }
