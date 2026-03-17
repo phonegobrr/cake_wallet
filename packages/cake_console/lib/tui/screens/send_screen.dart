@@ -31,7 +31,7 @@ class SendScreen implements TuiScreen {
         : mutedStyle().render('  Amount:  ');
     final amtValue = _amount.isEmpty ? mutedStyle().render('(enter amount)') : _amount;
 
-    final hints = mutedStyle().render('Tab: next field  Enter: send  Esc: clear');
+    final hints = mutedStyle().render('Up/Down: switch field  Enter: send  Esc: clear');
 
     final parts = <String>[
       header,
@@ -60,7 +60,7 @@ class SendScreen implements TuiScreen {
       _statusMessage = null;
     } else if (event.key == TerminalKey.enter) {
       _submitSend();
-    } else if (event.key == TerminalKey.tab) {
+    } else if (event.key == TerminalKey.up || event.key == TerminalKey.down) {
       _focusField = (_focusField + 1) % 2;
     } else if (event.key == TerminalKey.backspace) {
       if (_focusField == 0 && _address.isNotEmpty) {

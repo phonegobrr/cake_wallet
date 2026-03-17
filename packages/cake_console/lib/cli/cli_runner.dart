@@ -43,6 +43,7 @@ class McpCommand extends Command<void> {
 }
 
 /// Generic CLI command that dispatches to a headless command.
+/// Introspects the registered WalletCommand's args to create CLI options.
 class HeadlessCliCommand extends Command<void> {
   @override
   final String name;
@@ -60,12 +61,33 @@ class HeadlessCliCommand extends Command<void> {
     required CommandBus bus,
     required bool Function() isJsonMode,
   })  : _bus = bus,
-        _isJsonMode = isJsonMode;
+        _isJsonMode = isJsonMode {
+    // Register CLI options from the headless command's arg definitions
+    final cmd = bus.getCommand(headlessCommand);
+    if (cmd != null) {
+      for (final entry in cmd.args.entries) {
+        final arg = entry.value;
+        if (arg.type == bool) {
+          argParser.addFlag(
+            entry.key,
+            help: arg.description,
+            defaultsTo: arg.defaultValue == 'true',
+          );
+        } else {
+          argParser.addOption(
+            entry.key,
+            help: arg.description,
+            mandatory: arg.required,
+            defaultsTo: arg.defaultValue,
+          );
+        }
+      }
+    }
+  }
 
   @override
   Future<void> run() async {
     final params = <String, dynamic>{};
-    // Pass through all option values
     for (final option in argResults!.options) {
       if (argResults!.wasParsed(option)) {
         params[option] = argResults![option];

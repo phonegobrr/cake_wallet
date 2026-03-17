@@ -9,7 +9,8 @@ Track implementation status across all surfaces.
 | Wallet create | Y | | | |
 | Wallet restore (seed) | Y | | | |
 | Wallet restore (keys) | Y | | | |
-| Wallet list/switch | Y | S | S | S |
+| Wallet list | Y | S | S | S |
+| Wallet switch | Y | | | |
 | Balance display | Y | S | S | S |
 | Receive address | Y | S | S | S |
 | Send transaction | Y | S | S | S |
