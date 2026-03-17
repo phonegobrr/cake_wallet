@@ -57,6 +57,18 @@ class WalletLoadingService {
     }
   }
 
+  /// Headless-safe wallet loading — no Flutter UI, no popup dialogs.
+  /// Returns typed failures instead of showing error popups.
+  Future<WalletBase> loadHeadless(WalletType type, String name, {String? password}) async {
+    final walletService = walletServiceFactory.call(type);
+    final walletPassword = password ?? (await keyService.getWalletPassword(walletName: name));
+    final wallet = await walletService.openWallet(name, walletPassword);
+    if (type == WalletType.monero) {
+      await updateMoneroWalletPassword(wallet);
+    }
+    return wallet;
+  }
+
   Future<WalletBase> load(WalletType type, String name, {String? password, bool isBackground = false}) async {
     try {
       if (!isBackground) {

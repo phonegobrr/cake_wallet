@@ -67,7 +67,8 @@ abstract class AppStoreBase with Store {
     this.wallet!.setExceptionHandler((error, stackTrace) =>
         ExceptionHandler.onError(FlutterErrorDetails(exception: error, stack: stackTrace)));
 
-    if (isWalletConnectCompatibleChain(wallet.type)) {
+    if (isWalletConnectCompatibleChain(wallet.type) &&
+        getIt.isRegistered<WalletKitService>()) {
       await getIt.get<WalletKitService>().onDispose();
       getIt.get<WalletKitService>().create();
       await getIt.get<WalletKitService>().init();
