@@ -11,15 +11,18 @@ Future<void> main(List<String> args) async {
   // Redirect all printV output to stderr so stdout stays clean for MCP/JSON
   printVSink = (line) => stderr.writeln(line);
 
+  // Pre-parse global flags that affect initialization (before CommandRunner)
+  final useYes = args.contains('--yes') || args.contains('-y');
+  final noColor = args.contains('--no-color');
+  final dataDirOverride = _extractOption(args, '--data-dir');
+
   // Build runtime context with CLI port implementations
-  final pathProvider = CliPathProvider();
+  final pathProvider = CliPathProvider(overrideDir: dataDirOverride);
   final appDir = await pathProvider.getAppDir();
   final logger = StderrLogger();
 
   final storageKey = await _getOrCreateEncryptionKey('$appDir/.storage_key');
   final secureStorage = FileSecureStorage('$appDir/.secure_storage', storageKey);
-
-  final useYes = args.contains('--yes') || args.contains('-y');
 
   // For MCP mode, don't use stdin-based interaction (stdin is JSON-RPC)
   final isMcpMode = args.isNotEmpty && args[0] == 'mcp';
@@ -35,6 +38,10 @@ Future<void> main(List<String> args) async {
     logger: logger,
     interaction: interaction,
   );
+  ctx.noColor = noColor;
+  ctx.autoConfirm = useYes;
+  ctx.nonInteractive = isMcpMode;
+  ctx.jsonMode = args.contains('--json');
 
   // Use bootstrap() to register all commands and acquire wallet lock
   final bus = await bootstrap(ctx);
@@ -88,6 +95,16 @@ Future<void> main(List<String> args) async {
 }
 
 bool _isJson(List<String> args) => args.contains('--json');
+
+/// Extract an option value from raw args before CommandRunner parsing.
+/// Supports both `--key value` and `--key=value` forms.
+String? _extractOption(List<String> args, String key) {
+  for (int i = 0; i < args.length; i++) {
+    if (args[i] == key && i + 1 < args.length) return args[i + 1];
+    if (args[i].startsWith('$key=')) return args[i].substring(key.length + 1);
+  }
+  return null;
+}
 
 /// Generates encryption key or reads existing one from disk.
 Future<Uint8List> _getOrCreateEncryptionKey(String keyPath) async {
@@ -168,11 +185,11 @@ class NoOpUserInteraction implements UserInteractionPort {
   Future<bool> confirm(String message) async => false;
 
   @override
-  Future<String> promptText(String message, {bool obscure = false}) async =>
+  Future<String?> promptText(String message, {bool obscure = false}) async =>
       throw StateError(
           'Interactive input not available in MCP mode. Use --yes flag or provide all arguments.');
 
   @override
-  Future<int> pickOption(String message, List<String> options) async =>
+  Future<int?> pickOption(String message, List<String> options) async =>
       throw StateError('Interactive input not available in MCP mode.');
 }

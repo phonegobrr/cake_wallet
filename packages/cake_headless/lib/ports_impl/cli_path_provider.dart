@@ -6,9 +6,16 @@ import 'package:cw_core/root_dir.dart' as root_dir;
 /// CLI path provider that delegates to cw_core/root_dir.dart for consistency.
 /// If a root dir override was set via setRootDirOverride(), that takes precedence.
 /// Otherwise uses the same platform-specific logic as the main app.
+///
+/// Pass [overrideDir] to force a specific data directory (e.g. from --data-dir).
 class CliPathProvider implements PathProviderPort {
+  final String? overrideDir;
+
+  CliPathProvider({this.overrideDir});
+
   @override
   Future<String> getAppDir() async {
+    if (overrideDir != null) return overrideDir!;
     final dir = await root_dir.getAppDir();
     return dir.path;
   }
