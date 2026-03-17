@@ -2,6 +2,7 @@ import 'package:cake_headless/commands/command.dart';
 import 'package:cake_headless/commands/command_result.dart';
 import 'package:cake_headless/dto/send_result.dart';
 import 'package:cake_headless/runtime_context.dart';
+import 'package:cw_core/wallet_base.dart';
 
 class SendCommand extends WalletCommand<SendResult> {
   @override
@@ -28,7 +29,7 @@ class SendCommand extends WalletCommand<SendResult> {
     CakeRuntimeContext ctx,
     Map<String, dynamic> params,
   ) async {
-    final wallet = ctx.wallet;
+    final wallet = ctx.wallet as WalletBase?;
     if (wallet == null) {
       return CommandResult.error('NO_WALLET', message: ctx.strings.noWalletOpen);
     }

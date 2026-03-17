@@ -2,6 +2,7 @@ import 'package:cake_headless/commands/command.dart';
 import 'package:cake_headless/commands/command_result.dart';
 import 'package:cake_headless/dto/address_entry.dart';
 import 'package:cake_headless/runtime_context.dart';
+import 'package:cw_core/wallet_base.dart';
 
 class GetReceiveAddressCommand extends WalletCommand<AddressEntry> {
   @override
@@ -16,7 +17,7 @@ class GetReceiveAddressCommand extends WalletCommand<AddressEntry> {
     CakeRuntimeContext ctx,
     Map<String, dynamic> params,
   ) async {
-    final wallet = ctx.wallet;
+    final wallet = ctx.wallet as WalletBase?;
     if (wallet == null) {
       return CommandResult.error('NO_WALLET', message: ctx.strings.noWalletOpen);
     }

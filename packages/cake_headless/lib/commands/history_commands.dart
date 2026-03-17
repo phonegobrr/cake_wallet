@@ -3,6 +3,7 @@ import 'package:cake_headless/commands/command_result.dart';
 import 'package:cake_headless/dto/transaction_summary.dart';
 import 'package:cake_headless/runtime_context.dart';
 import 'package:cw_core/transaction_direction.dart';
+import 'package:cw_core/wallet_base.dart';
 
 class ListTransactionsCommand extends WalletCommand<List<TransactionSummary>> {
   @override
@@ -23,7 +24,7 @@ class ListTransactionsCommand extends WalletCommand<List<TransactionSummary>> {
     CakeRuntimeContext ctx,
     Map<String, dynamic> params,
   ) async {
-    final wallet = ctx.wallet;
+    final wallet = ctx.wallet as WalletBase?;
     if (wallet == null) {
       return CommandResult.error('NO_WALLET', message: ctx.strings.noWalletOpen);
     }
@@ -44,8 +45,7 @@ class ListTransactionsCommand extends WalletCommand<List<TransactionSummary>> {
               amount: tx.amountFormatted(),
               fee: tx.feeFormatted() ?? '0',
               dateFormatted: tx.date.toIso8601String(),
-              isIncoming:
-                  tx.direction == TransactionDirection.incoming,
+              isIncoming: tx.direction == TransactionDirection.incoming,
               isPending: tx.isPending,
               confirmations: tx.confirmations,
             ))

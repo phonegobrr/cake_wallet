@@ -30,7 +30,7 @@ class CakeRuntimeContext {
   dynamic wallet;
 
   /// Callback to list all available wallet infos.
-  /// Returns List<WalletInfo> — typed as dynamic to avoid hive import chain.
+  /// Returns `List<WalletInfo>` — typed as dynamic to avoid hive import chain.
   Future<List<dynamic>> Function()? listWalletInfos;
 
   /// Callback to load/open a wallet by name and type.
