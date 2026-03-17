@@ -185,7 +185,7 @@ class SendPage extends BasePage {
             sendCards.add(
               SendCard(
                 currentTheme: currentTheme,
-                key: output.key,
+                key: ValueKey(output.id),
                 output: output,
                 sendViewModel: sendViewModel,
                 paymentViewModel: paymentViewModel,

@@ -40,8 +40,10 @@ const String cryptoNumberPattern = '0.0';
 class Output = OutputBase with _$Output;
 
 abstract class OutputBase with Store {
+  static int _idCounter = 0;
+
   OutputBase(this._wallet, this._appStore, this._fiatConversationStore, this.cryptoCurrencyHandler)
-      : key = UniqueKey(),
+      : id = 'output_${_idCounter++}',
         sendAll = false,
         cryptoAmount = '',
         cryptoFullBalance = '',
@@ -60,7 +62,8 @@ abstract class OutputBase with Store {
     });
   }
 
-  Key key;
+  /// Unique identifier for this output. Flutter UI wraps in ValueKey() as needed.
+  final String id;
 
   bool get useSatoshi => _appStore.amountParsingProxy.useSatoshi(cryptoCurrencyHandler());
 

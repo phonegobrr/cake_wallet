@@ -1375,6 +1375,19 @@ abstract class DashboardViewModelBase with Store {
     }
   }
 
+  /// Headless tor toggle — no popup, no ensureTorStarted UI flow.
+  /// Toggles the setting and reconnects the wallet node.
+  @action
+  Future<void> setBuiltinTorHeadless(bool value) async {
+    settingsStore.currentBuiltinTor = value;
+    int? chainId;
+    if (isEVMWallet) {
+      chainId = evm!.getSelectedChainId(wallet);
+    }
+    await wallet.connectToNode(
+        node: appStore.settingsStore.getCurrentNode(wallet.type, chainId: chainId));
+  }
+
   @action
   void setSyncAll(bool value) => settingsStore.currentSyncAll = value;
 
