@@ -52,12 +52,31 @@ class TerminalDriver {
     }
   }
 
-  void enterAlternateScreen() => stdout.write('\x1b[?1049h');
-  void exitAlternateScreen() => stdout.write('\x1b[?1049l');
-  void hideCursor() => stdout.write('\x1b[?25l');
-  void showCursor() => stdout.write('\x1b[?25h');
-  void clearScreen() => stdout.write('\x1b[2J\x1b[H');
-  void moveTo(int row, int col) => stdout.write('\x1b[$row;${col}H');
+  bool get supportsAnsi => stdout.supportsAnsiEscapes;
+
+  void enterAlternateScreen() {
+    if (supportsAnsi) stdout.write('\x1b[?1049h');
+  }
+
+  void exitAlternateScreen() {
+    if (supportsAnsi) stdout.write('\x1b[?1049l');
+  }
+
+  void hideCursor() {
+    if (supportsAnsi) stdout.write('\x1b[?25l');
+  }
+
+  void showCursor() {
+    if (supportsAnsi) stdout.write('\x1b[?25h');
+  }
+
+  void clearScreen() {
+    if (supportsAnsi) stdout.write('\x1b[2J\x1b[H');
+  }
+
+  void moveTo(int row, int col) {
+    if (supportsAnsi) stdout.write('\x1b[$row;${col}H');
+  }
 
   Stream<TerminalEvent> get events {
     _controller ??= StreamController<TerminalEvent>.broadcast();

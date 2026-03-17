@@ -10,6 +10,9 @@ class WalletListScreen extends TuiScreen {
   List<WalletSummary> _wallets = [];
   int _selectedIndex = 0;
   bool _isLoading = true;
+  String? _statusMessage;
+  bool _statusIsError = false;
+  int _scrollOffset = 0;
 
   WalletListScreen(this._bus);
 
@@ -23,8 +26,12 @@ class WalletListScreen extends TuiScreen {
   Future<void> refresh() async {
     try {
       final result = await _bus.dispatch('wallet.list', {});
-      if (result.success) _wallets = (result.data as List<WalletSummary>?) ?? [];
-    } catch (_) {}
+      _wallets = result.success
+          ? (result.data as List<WalletSummary>?) ?? []
+          : [];
+    } catch (_) {
+      _wallets = [];
+    }
     _isLoading = false;
   }
 
@@ -42,7 +49,22 @@ class WalletListScreen extends TuiScreen {
       ]);
     }
 
-    final rows = _wallets.asMap().entries.map((e) {
+    // Viewport: show only what fits in available height
+    final availableHeight = (height - 6).clamp(1, _wallets.length);
+    if (_selectedIndex < _scrollOffset) {
+      _scrollOffset = _selectedIndex;
+    }
+    if (_selectedIndex >= _scrollOffset + availableHeight) {
+      _scrollOffset = _selectedIndex - availableHeight + 1;
+    }
+
+    final visibleWallets = _wallets
+        .asMap()
+        .entries
+        .skip(_scrollOffset)
+        .take(availableHeight);
+
+    final rows = visibleWallets.map((e) {
       final isSelected = e.key == _selectedIndex;
       final w = e.value;
       final marker = isSelected ? '> ' : '  ';
@@ -52,7 +74,17 @@ class WalletListScreen extends TuiScreen {
       return style.render('$marker${w.name} (${w.typeName})$active');
     }).toList();
 
-    return joinVertical(posLeft, [header, '', ...rows]);
+    final hints =
+        mutedStyle().render('  Enter: open wallet  Up/Down: navigate');
+
+    final parts = <String>[header, '', ...rows, '', hints];
+
+    if (_statusMessage != null) {
+      final style = _statusIsError ? errorStyle() : successStyle();
+      parts.add(style.render('  $_statusMessage'));
+    }
+
+    return joinVertical(posLeft, parts);
   }
 
   @override
@@ -63,6 +95,28 @@ class WalletListScreen extends TuiScreen {
       _selectedIndex = (_selectedIndex - 1).clamp(0, maxIndex);
     } else if (event.key == TerminalKey.down) {
       _selectedIndex = (_selectedIndex + 1).clamp(0, maxIndex);
+    } else if (event.key == TerminalKey.enter) {
+      _openSelected();
     }
+  }
+
+  void _openSelected() {
+    if (_wallets.isEmpty) return;
+    final w = _wallets[_selectedIndex];
+    _statusMessage = 'Opening ${w.name}...';
+    _statusIsError = false;
+    _bus.dispatch('wallet.open', {
+      'name': w.name,
+      'type': w.typeRaw,
+    }).then((result) {
+      if (result.success) {
+        _statusMessage = 'Opened ${w.name}';
+        _statusIsError = false;
+      } else {
+        _statusMessage = result.message ?? 'Failed to open wallet';
+        _statusIsError = true;
+      }
+      onStateChanged?.call();
+    });
   }
 }

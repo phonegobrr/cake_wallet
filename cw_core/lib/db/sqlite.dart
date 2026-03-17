@@ -40,6 +40,9 @@ Future<void> initDb({String? pathOverride}) async {
   }
   await db?.close();
   db = await openDatabase(dbFile.path, version: 3,
+    onOpen: (Database db) async {
+      await db.execute('PRAGMA journal_mode=WAL;');
+    },
     onUpgrade: (Database db, int oldVersion, int newVersion) async {
       printV("migrating: $oldVersion, $newVersion");
       if (oldVersion <= 1) {

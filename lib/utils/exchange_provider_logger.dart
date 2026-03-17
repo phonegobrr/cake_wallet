@@ -156,8 +156,7 @@ class ExchangeProviderLogger {
     _logs.insert(0, entry);
 
     if (_logs.length > maxLogs * 2) {
-      final excessCount = _logs.length - maxLogs;
-      _logs.removeRange(0, excessCount);
+      _logs.removeRange(maxLogs, _logs.length);
     }
   }
 
