@@ -80,11 +80,11 @@ class GetSyncStatusCommand extends WalletCommand<SyncStatusSummary> {
     CakeRuntimeContext ctx,
     Map<String, dynamic> params,
   ) async {
-    if (ctx.wallet == null || ctx.wallet is! WalletBase) {
+    if (!ctx.hasWallet) {
       return CommandResult.error('NO_WALLET',
           message: ctx.strings.noWalletOpen);
     }
-    final wallet = ctx.wallet as WalletBase;
+    final wallet = ctx.wallet!;
     final status = wallet.syncStatus;
 
     return CommandResult.ok(SyncStatusSummary(

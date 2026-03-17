@@ -1,6 +1,7 @@
 import 'package:cake_headless/dto/address_entry.dart';
 import 'package:cake_headless/dto/backup_result.dart';
 import 'package:cake_headless/dto/node_info.dart';
+import 'package:cake_headless/dto/send_result.dart';
 import 'package:cake_headless/dto/swap_quote.dart';
 import 'package:cake_headless/dto/swap_status.dart';
 import 'package:cake_headless/ports/secure_storage_port.dart';
@@ -12,34 +13,37 @@ import 'package:cake_headless/ports/user_interaction_port.dart';
 import 'package:cake_headless/events/event_bus.dart';
 import 'package:cake_headless/i18n/app_strings.dart';
 import 'package:cake_headless/i18n/default_app_strings.dart';
+import 'package:cw_core/wallet_base.dart';
+import 'package:cw_core/wallet_info.dart';
 
 /// Dependency-injection context that owns all runtime resources for headless
 /// execution. Entry points populate this with real service instances after
 /// initialization.
-///
-/// The [wallet], [listWalletInfos], and [loadWallet] fields are typed as
-/// dynamic/Function to avoid importing cw_core's hive-dependent types at this
-/// layer. Commands cast them to the concrete cw_core types they need.
 class CakeRuntimeContext {
   final SecureStoragePort secureStorage;
   final SettingsStorePort settings;
   final PathProviderPort pathProvider;
   final AssetLoaderPort assetLoader;
   final LoggerPort logger;
-  final UserInteractionPort interaction;
+  UserInteractionPort interaction;
   final WalletEventBus eventBus;
   final AppStrings strings;
 
-  /// The currently active wallet (typed as WalletBase at usage sites).
-  /// Populated by the entry point after initialization.
-  dynamic wallet;
+  /// The currently active wallet.
+  WalletBase? wallet;
+
+  /// Whether a wallet is currently loaded.
+  bool get hasWallet => wallet != null;
 
   /// Callback to list all available wallet infos.
-  /// Returns `List<WalletInfo>` — typed as dynamic to avoid hive import chain.
-  Future<List<dynamic>> Function()? listWalletInfos;
+  Future<List<WalletInfo>> Function()? listWalletInfos;
 
   /// Callback to load/open a wallet by name and type.
   Future<void> Function(String name, int walletTypeRaw)? loadWallet;
+
+  /// Callback to send a transaction. Wired by the entry point.
+  Future<SendResult> Function(String address, String amount,
+      {String? priority})? sendTransaction;
 
   /// Callback to list configured nodes as DTOs.
   Future<List<NodeInfo>> Function()? listNodes;
@@ -49,7 +53,8 @@ class CakeRuntimeContext {
 
   /// Callback to get an exchange quote. Wired to exchange providers when
   /// full DI is available.
-  Future<SwapQuote> Function(String from, String to, String amount)? getSwapQuote;
+  Future<SwapQuote> Function(String from, String to, String amount)?
+      getSwapQuote;
 
   /// Callback to check exchange trade status by trade ID.
   Future<SwapStatus> Function(String tradeId)? getSwapStatus;
@@ -59,6 +64,12 @@ class CakeRuntimeContext {
 
   /// Callback to import an encrypted backup from the given path.
   Future<BackupResult> Function(String inputPath)? importBackup;
+
+  /// Runtime mode flags
+  bool nonInteractive = false;
+  bool autoConfirm = false;
+  bool jsonMode = false;
+  bool noColor = false;
 
   CakeRuntimeContext({
     required this.secureStorage,

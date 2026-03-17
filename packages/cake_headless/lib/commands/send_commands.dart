@@ -29,10 +29,10 @@ class SendCommand extends WalletCommand<SendResult> {
     CakeRuntimeContext ctx,
     Map<String, dynamic> params,
   ) async {
-    if (ctx.wallet == null || ctx.wallet is! WalletBase) {
+    if (!ctx.hasWallet) {
       return CommandResult.error('NO_WALLET', message: ctx.strings.noWalletOpen);
     }
-    final wallet = ctx.wallet as WalletBase;
+    final wallet = ctx.wallet!;
 
     final address = params['address']?.toString() ?? '';
     final amount = params['amount']?.toString() ?? '';
