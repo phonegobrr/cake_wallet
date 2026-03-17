@@ -49,6 +49,7 @@ export 'events/wallet_event.dart';
 
 // Services
 export 'services/wallet_lock.dart';
+export 'services/wallet_runtime.dart';
 
 // i18n
 export 'i18n/app_strings.dart';

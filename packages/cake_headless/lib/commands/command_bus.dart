@@ -41,6 +41,12 @@ class CommandBus {
         params[arg.key] = arg.value.defaultValue;
       }
     }
+    // Enforce isSafeForNonInteractive
+    if (!cmd.isSafeForNonInteractive && _ctx.nonInteractive && !_ctx.autoConfirm) {
+      return CommandResult.error('INTERACTION_REQUIRED',
+          message: 'Command "${cmd.name}" requires interactive confirmation. '
+              'Use --yes to auto-confirm.');
+    }
     try {
       return await cmd.execute(_ctx, params);
     } catch (e, s) {
