@@ -9,6 +9,7 @@ class ContactsScreen extends TuiScreen {
   final CommandBus _bus;
   List<AddressEntry> _contacts = [];
   int _selectedIndex = 0;
+  int _scrollOffset = 0;
   bool _isLoading = true;
 
   ContactsScreen(this._bus);
@@ -23,10 +24,12 @@ class ContactsScreen extends TuiScreen {
   Future<void> refresh() async {
     try {
       final result = await _bus.dispatch('contacts.list', {});
-      if (result.success) {
-        _contacts = (result.data as List<AddressEntry>?) ?? [];
-      }
-    } catch (_) {}
+      _contacts = result.success
+          ? (result.data as List<AddressEntry>?) ?? []
+          : [];
+    } catch (_) {
+      _contacts = [];
+    }
     _isLoading = false;
   }
 
@@ -44,7 +47,22 @@ class ContactsScreen extends TuiScreen {
       ]);
     }
 
-    final rows = _contacts.asMap().entries.map((e) {
+    // Viewport
+    final availableHeight = (height - 6).clamp(1, _contacts.length);
+    if (_selectedIndex < _scrollOffset) {
+      _scrollOffset = _selectedIndex;
+    }
+    if (_selectedIndex >= _scrollOffset + availableHeight) {
+      _scrollOffset = _selectedIndex - availableHeight + 1;
+    }
+
+    final visible = _contacts
+        .asMap()
+        .entries
+        .skip(_scrollOffset)
+        .take(availableHeight);
+
+    final rows = visible.map((e) {
       final isSelected = e.key == _selectedIndex;
       final c = e.value;
       final style = isSelected

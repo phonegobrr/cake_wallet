@@ -8,6 +8,7 @@ class SettingsScreen extends TuiScreen {
   final CommandBus _bus;
   Map<String, String> _settings = {};
   int _selectedIndex = 0;
+  int _scrollOffset = 0;
   bool _isLoading = true;
 
   SettingsScreen(this._bus);
@@ -22,10 +23,12 @@ class SettingsScreen extends TuiScreen {
   Future<void> refresh() async {
     try {
       final result = await _bus.dispatch('settings.list', {});
-      if (result.success && result.data is Map) {
-        _settings = Map<String, String>.from(result.data as Map);
-      }
-    } catch (_) {}
+      _settings = (result.success && result.data is Map)
+          ? Map<String, String>.from(result.data as Map)
+          : {};
+    } catch (_) {
+      _settings = {};
+    }
     _isLoading = false;
   }
 
@@ -44,7 +47,20 @@ class SettingsScreen extends TuiScreen {
     }
 
     final entries = _settings.entries.toList();
-    final rows = entries.asMap().entries.map((e) {
+
+    // Viewport
+    final availableHeight = (height - 6).clamp(1, entries.length);
+    if (_selectedIndex < _scrollOffset) {
+      _scrollOffset = _selectedIndex;
+    }
+    if (_selectedIndex >= _scrollOffset + availableHeight) {
+      _scrollOffset = _selectedIndex - availableHeight + 1;
+    }
+
+    final visible =
+        entries.asMap().entries.skip(_scrollOffset).take(availableHeight);
+
+    final rows = visible.map((e) {
       final isSelected = e.key == _selectedIndex;
       final style = isSelected
           ? Style().bold(true).foreground(cakeText)

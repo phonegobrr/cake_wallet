@@ -10,6 +10,7 @@ class HistoryScreen extends TuiScreen {
   final CommandBus _bus;
   List<TransactionSummary> _txs = [];
   int _selectedIndex = 0;
+  int _scrollOffset = 0;
   bool _isLoading = true;
 
   HistoryScreen(this._bus);
@@ -24,8 +25,12 @@ class HistoryScreen extends TuiScreen {
   Future<void> refresh() async {
     try {
       final result = await _bus.dispatch('history.list', {'limit': 50});
-      if (result.success) _txs = (result.data as List<TransactionSummary>?) ?? [];
-    } catch (_) {}
+      _txs = result.success
+          ? (result.data as List<TransactionSummary>?) ?? []
+          : [];
+    } catch (_) {
+      _txs = [];
+    }
     _isLoading = false;
   }
 
@@ -43,20 +48,37 @@ class HistoryScreen extends TuiScreen {
       ]);
     }
 
-    final table = lip_table.Table()
-      ..headers(['Date', 'Dir', 'Amount', 'Confirmations', 'Status'])
-      ..rows(_txs.map((tx) => [
-            tx.dateFormatted,
-            tx.isIncoming ? 'IN ' : 'OUT',
-            tx.amount,
-            '${tx.confirmations}',
-            tx.isPending ? 'Pending' : 'Confirmed',
-          ]).toList())
-      ..borderDef(roundedBorder)
-      ..borderColumn(true)
-      ..borderStyleDef(Style().foreground(cakePrimary));
+    // Viewport: show only what fits
+    final availableHeight = (height - 6).clamp(1, _txs.length);
+    if (_selectedIndex < _scrollOffset) {
+      _scrollOffset = _selectedIndex;
+    }
+    if (_selectedIndex >= _scrollOffset + availableHeight) {
+      _scrollOffset = _selectedIndex - availableHeight + 1;
+    }
 
-    return joinVertical(posLeft, [header, '', table.render()]);
+    final visible = _txs.skip(_scrollOffset).take(availableHeight).toList();
+
+    final rows = visible.asMap().entries.map((e) {
+      final globalIdx = e.key + _scrollOffset;
+      final isSelected = globalIdx == _selectedIndex;
+      final tx = e.value;
+      final marker = isSelected ? '> ' : '  ';
+      final dir = tx.isIncoming ? 'IN ' : 'OUT';
+      final status = tx.isPending ? 'Pending' : 'Confirmed';
+      final style =
+          isSelected ? Style().bold(true).foreground(cakeText) : mutedStyle();
+      return style.render(
+          '$marker${tx.dateFormatted}  $dir  ${tx.amount}  ${tx.confirmations}  $status');
+    }).toList();
+
+    final scrollInfo = _txs.length > availableHeight
+        ? mutedStyle().render(
+            '  Showing ${_scrollOffset + 1}-${_scrollOffset + visible.length} of ${_txs.length}')
+        : '';
+
+    return joinVertical(
+        posLeft, [header, '', ...rows, if (scrollInfo.isNotEmpty) scrollInfo]);
   }
 
   @override
