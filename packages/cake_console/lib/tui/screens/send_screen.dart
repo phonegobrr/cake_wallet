@@ -31,7 +31,7 @@ class SendScreen implements TuiScreen {
 
     final hints = mutedStyle().render('Tab: next field  Enter: send  Esc: cancel');
 
-    return joinVertical(Position.left, [
+    return joinVertical(posLeft, [
       header,
       '',
       '$addrLabel$addrValue',

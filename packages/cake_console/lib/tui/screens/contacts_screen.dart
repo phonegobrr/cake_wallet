@@ -16,7 +16,7 @@ class ContactsScreen implements TuiScreen {
   String render(int width, int height, CommandBus bus) {
     final header = panelStyle().width(width - 4).render('Contacts');
 
-    return joinVertical(Position.left, [
+    return joinVertical(posLeft, [
       header,
       '',
       mutedStyle().render('  Contact management coming soon'),

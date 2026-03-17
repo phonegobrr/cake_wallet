@@ -1,17 +1,17 @@
 import 'package:dart_lipgloss/dart_lipgloss.dart';
 
 // Brand colors
-final cakePrimary = Color('#7D56F4');
-final cakeAccent = Color('#FF6B6B');
-final cakeSuccess = Color('#4ECDC4');
-final cakeWarning = Color('#FFE66D');
-final cakeError = Color('#FF4444');
-final cakeMuted = Color('#888899');
-final cakeSurface = Color('#1A1A2E');
-final cakeBorder = Color('#333A50');
-final cakeText = Color('#FAFAFA');
-final cakeTextDim = Color('#A0A0B0');
-final cakeSyncing = Color('#FFB84E');
+final cakePrimary = lipColor('#7D56F4');
+final cakeAccent = lipColor('#FF6B6B');
+final cakeSuccess = lipColor('#4ECDC4');
+final cakeWarning = lipColor('#FFE66D');
+final cakeError = lipColor('#FF4444');
+final cakeMuted = lipColor('#888899');
+final cakeSurface = lipColor('#1A1A2E');
+final cakeBorder = lipColor('#333A50');
+final cakeText = lipColor('#FAFAFA');
+final cakeTextDim = lipColor('#A0A0B0');
+final cakeSyncing = lipColor('#FFB84E');
 
 Style headerStyle() => Style()
     .bold(true)

@@ -85,7 +85,7 @@ class TuiApp {
       final marker = isActive ? '> ' : '  ';
       return style.render('$marker${e.value.title}');
     }).toList();
-    final tabBar = joinHorizontal(Position.top, tabs);
+    final tabBar = joinHorizontal(posTop, tabs);
 
     // Screen content
     final content = screens[_activeTab].render(w, h - 4, commandBus);
@@ -94,7 +94,7 @@ class TuiApp {
     final statusBar = mutedStyle().width(w).render(
         ' Tab: switch  q: quit  Up/Down: navigate  Enter: select  Esc: back');
 
-    final output = joinVertical(Position.left, [header, tabBar, content, statusBar]);
+    final output = joinVertical(posLeft, [header, tabBar, content, statusBar]);
     stdout.write(output);
   }
 

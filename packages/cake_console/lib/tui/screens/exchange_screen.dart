@@ -16,7 +16,7 @@ class ExchangeScreen implements TuiScreen {
   String render(int width, int height, CommandBus bus) {
     final header = panelStyle().width(width - 4).render('Exchange / Swap');
 
-    return joinVertical(Position.left, [
+    return joinVertical(posLeft, [
       header,
       '',
       mutedStyle().render('  Exchange functionality coming soon'),

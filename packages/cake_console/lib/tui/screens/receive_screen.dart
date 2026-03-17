@@ -27,7 +27,7 @@ class ReceiveScreen implements TuiScreen {
     final header = panelStyle().width(width - 4).render('Receive');
 
     if (_address == null) {
-      return joinVertical(Position.left, [
+      return joinVertical(posLeft, [
         header,
         '',
         mutedStyle().render('  No wallet open'),
@@ -37,7 +37,7 @@ class ReceiveScreen implements TuiScreen {
     final addrText = Style().bold(true).foreground(cakeText).render(_address!.address);
     final qr = renderQrCode(_address!.address);
 
-    return joinVertical(Position.left, [
+    return joinVertical(posLeft, [
       header,
       '',
       '  Address:',

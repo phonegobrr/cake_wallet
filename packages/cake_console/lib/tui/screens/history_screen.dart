@@ -28,7 +28,7 @@ class HistoryScreen implements TuiScreen {
     final header = panelStyle().width(width - 4).render('Transaction History');
 
     if (_txs.isEmpty) {
-      return joinVertical(Position.left, [
+      return joinVertical(posLeft, [
         header,
         '',
         mutedStyle().render('  No transactions'),
@@ -48,7 +48,7 @@ class HistoryScreen implements TuiScreen {
       ..borderColumn(true)
       ..borderStyleDef(Style().foreground(cakePrimary));
 
-    return joinVertical(Position.left, [header, '', table.render()]);
+    return joinVertical(posLeft, [header, '', table.render()]);
   }
 
   @override

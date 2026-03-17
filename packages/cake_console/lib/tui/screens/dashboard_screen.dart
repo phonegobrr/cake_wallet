@@ -46,7 +46,7 @@ class DashboardScreen implements TuiScreen {
     final syncIndicator = statusStyle(isSynced).render(
         '${isSynced ? "SYNCED" : "SYNCING"} $syncText');
 
-    final topRow = joinHorizontal(Position.top, [balCard, '  ', syncIndicator]);
+    final topRow = joinHorizontal(posTop, [balCard, '  ', syncIndicator]);
 
     String txSection;
     if (_recentTxs.isEmpty) {
@@ -69,7 +69,7 @@ class DashboardScreen implements TuiScreen {
     final actions = mutedStyle().render(
         '[S]end  [R]eceive  [W]allets  [E]xchange  [H]istory');
 
-    return joinVertical(Position.left, [topRow, '', txSection, '', actions]);
+    return joinVertical(posLeft, [topRow, '', txSection, '', actions]);
   }
 
   @override

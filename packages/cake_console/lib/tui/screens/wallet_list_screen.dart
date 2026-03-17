@@ -27,7 +27,7 @@ class WalletListScreen implements TuiScreen {
     final header = panelStyle().width(width - 4).render('Wallets');
 
     if (_wallets.isEmpty) {
-      return joinVertical(Position.left, [
+      return joinVertical(posLeft, [
         header,
         '',
         mutedStyle().render('  No wallets found. Create one with [C]reate.'),
@@ -43,7 +43,7 @@ class WalletListScreen implements TuiScreen {
       return style.render('$marker${w.name} (${w.typeName})$active');
     }).toList();
 
-    return joinVertical(Position.left, [header, '', ...rows]);
+    return joinVertical(posLeft, [header, '', ...rows]);
   }
 
   @override
