@@ -163,9 +163,11 @@ packages:
   dart_lipgloss:
     dependency: "direct main"
     description:
-      path: "/Users/ric/Desktop/working/dart_lipgloss"
-      relative: false
-    source: path
+      path: "."
+      ref: main
+      resolved-ref: "047d42d4e4514b2c691a908cb19a3cff8a42e65f"
+      url: "https://github.com/phonegobrr/dart_lipgloss"
+    source: git
     version: "0.1.0"
   decimal:
     dependency: transitive
