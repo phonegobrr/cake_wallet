@@ -39,7 +39,7 @@ import 'package:cake_wallet/utils/device_info.dart';
 import 'package:cake_wallet/utils/package_info.dart';
 import 'package:cake_wallet/view_model/settings/sync_mode.dart';
 import 'package:cw_core/node.dart';
-import 'package:cw_core/set_app_secure_native.dart';
+import 'package:cw_core_flutter/set_app_secure_native.dart';
 import 'package:cw_core/utils/print_verbose.dart';
 import 'package:cw_core/wallet_type.dart';
 import 'package:device_info_plus/device_info_plus.dart';

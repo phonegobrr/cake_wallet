@@ -1,8 +1,8 @@
 import 'dart:math';
 
 import 'package:cake_wallet/wownero/wownero.dart';
-import 'package:cw_core/balance_card_style_settings.dart';
-import 'package:cw_core/card_design.dart';
+import 'package:cw_core_flutter/balance_card_style_settings.dart';
+import 'package:cw_core_flutter/card_design.dart';
 import 'package:cw_core/wallet_base.dart';
 import 'package:cw_core/wallet_type.dart';
 import 'package:flutter/material.dart';

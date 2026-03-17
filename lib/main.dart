@@ -58,7 +58,7 @@ import 'package:cw_core/utils/proxy_wrapper.dart';
 import 'package:cw_core/utils/tor/abstract.dart';
 import 'package:cw_core/wallet_info.dart';
 import 'package:cw_core/wallet_type.dart';
-import 'package:cw_core/window_size.dart';
+import 'package:cw_core_flutter/window_size.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
