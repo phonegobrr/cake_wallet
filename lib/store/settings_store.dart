@@ -1666,6 +1666,151 @@ abstract class SettingsStoreBase with Store {
     );
   }
 
+  /// Headless-safe factory that skips Flutter-specific initialization.
+  /// Accepts SharedPreferences and SecureStorage directly instead of
+  /// reading from getIt. Uses sensible defaults for headless mode.
+  static Future<SettingsStore> loadForHeadless({
+    required SharedPreferences sharedPreferences,
+    required SecureStorage secureStorage,
+    required Box<Node> nodeSource,
+    required Box<Node> powNodeSource,
+    bool isBitcoinBuyEnabled = false,
+  }) async {
+    final currentFiatCurrency = FiatCurrency.deserialize(
+        raw: sharedPreferences.getString(PreferencesKey.currentFiatCurrencyKey) ??
+            FiatCurrency.usd.serialize());
+
+    final currentBalanceDisplayMode = BalanceDisplayMode.deserialize(
+        raw: sharedPreferences.getInt(PreferencesKey.currentBalanceDisplayModeKey) ??
+            BalanceDisplayMode.availableBalance.serialize());
+
+    final shouldSaveRecipientAddress =
+        sharedPreferences.getBool(PreferencesKey.shouldSaveRecipientAddressKey) ?? false;
+    final currentFiatApiMode = FiatApiMode.deserialize(
+        raw: sharedPreferences.getInt(PreferencesKey.currentFiatApiModeKey) ??
+            FiatApiMode.enabled.raw);
+    final exchangeStatus = ExchangeApiMode.deserialize(
+        raw: sharedPreferences.getInt(PreferencesKey.exchangeStatusKey) ??
+            ExchangeApiMode.enabled.raw);
+    final actionListDisplayMode = ObservableList<ActionListDisplayMode>();
+    actionListDisplayMode.addAll(deserializeActionlistDisplayModes(
+        sharedPreferences.getInt(PreferencesKey.displayActionListModeKey) ?? defaultActionsMode));
+    final pinLength = sharedPreferences.getInt(PreferencesKey.currentPinLength);
+    final savedLanguageCode =
+        sharedPreferences.getString(PreferencesKey.currentLanguageCode) ?? 'en';
+    final builtinTor = sharedPreferences.getBool(PreferencesKey.currentBuiltinTor) ?? false;
+
+    final nodes = <WalletType, Node>{};
+    final powNodes = <WalletType, Node>{};
+
+    for (final type in WalletType.values) {
+      final nodeId = sharedPreferences.getInt(PreferencesKey.getCurrentNodeIdKey(type));
+      if (nodeId != null) {
+        final node = nodeSource.get(nodeId);
+        if (node != null) nodes[type] = node;
+      }
+      final powNodeId = sharedPreferences.getInt(PreferencesKey.getCurrentPowNodeIdKey(type));
+      if (powNodeId != null) {
+        final node = powNodeSource.get(powNodeId);
+        if (node != null) powNodes[type] = node;
+      }
+    }
+
+    return SettingsStore(
+      secureStorage: secureStorage,
+      sharedPreferences: sharedPreferences,
+      initialShouldShowMarketPlaceInDashboard: false,
+      initialShowAddressBookPopupEnabled: false,
+      initialSyncStatusDisplayMode: SyncStatusDisplayMode.blocksRemaining,
+      nodes: nodes,
+      powNodes: powNodes,
+      appVersion: '0.0.0-headless',
+      deviceName: 'headless',
+      displayAmountsInSatoshi: BitcoinAmountDisplayMode.deserialize(
+          raw: sharedPreferences.getInt(PreferencesKey.displayAmountsInSatoshi) ?? 0),
+      isBitcoinBuyEnabled: isBitcoinBuyEnabled,
+      initialFiatCurrency: currentFiatCurrency,
+      initialBalanceDisplayMode: currentBalanceDisplayMode,
+      initialSaveRecipientAddress: shouldSaveRecipientAddress,
+      initialAutoGenerateSubaddressStatus: AutoGenerateSubaddressStatus.enabled,
+      initialMoneroSeedType: MoneroSeedType.defaultSeedType,
+      initialBitcoinSeedType: BitcoinSeedType.defaultDerivationType,
+      initialNanoSeedType: NanoSeedType.defaultDerivationType,
+      initialAppSecure: false,
+      initialDisableTrade: sharedPreferences.getBool(PreferencesKey.disableTradeOption) ?? false,
+      initialDisableAutomaticExchangeStatusUpdates: false,
+      initialDisableBulletin: true,
+      initialWalletListOrder: FilterListOrderType.CreationDate,
+      initialWalletListAscending: true,
+      initialContactListOrder: FilterListOrderType.CreationDate,
+      initialContactListAscending: true,
+      initialFiatMode: currentFiatApiMode,
+      initialAllowBiometricalAuthentication: false,
+      initialEnableDuressPin: false,
+      initialCake2FAPresetOptions: Cake2FAPresetsOptions.normal,
+      initialUseTOTP2FA: false,
+      initialTotpSecretKey: '',
+      initialFailedTokenTrial: 0,
+      initialExchangeStatus: exchangeStatus,
+      actionlistDisplayMode: actionListDisplayMode,
+      initialPinLength: pinLength,
+      pinTimeOutDuration: PinCodeRequiredDuration.tenMinutes,
+      seedPhraseLength: defaultSeedPhraseLength,
+      initialLanguageCode: savedLanguageCode,
+      sortBalanceBy: SortBalanceBy.values[sharedPreferences.getInt(PreferencesKey.sortBalanceBy) ?? 0],
+      pinNativeTokenAtTop: sharedPreferences.getBool(PreferencesKey.pinNativeTokenAtTop) ?? true,
+      useEtherscan: sharedPreferences.getBool(PreferencesKey.useEtherscan) ?? true,
+      usePolygonScan: true,
+      useBaseScan: true,
+      useArbiScan: true,
+      useBscScan: true,
+      useTronGrid: true,
+      useMempoolFeeAPI: sharedPreferences.getBool(PreferencesKey.useMempoolFeeAPI) ?? true,
+      useBlinkProtection: false,
+      initialEvmHiddenChainIds: [],
+      defaultNanoRep: '',
+      defaultBananoRep: '',
+      lookupsTwitter: false,
+      lookupsZanoAlias: true,
+      lookupsMastodon: false,
+      lookupsYatService: false,
+      lookupsUnstoppableDomains: true,
+      lookupsOpenAlias: true,
+      lookupsENS: true,
+      lookupsWellKnown: true,
+      usePayjoin: sharedPreferences.getBool(PreferencesKey.usePayjoin) ?? true,
+      showPayjoinCard: false,
+      customBitcoinFeeRate: sharedPreferences.getInt(PreferencesKey.customBitcoinFeeRate) ?? 1,
+      silentPaymentsCardDisplay: sharedPreferences.getBool(PreferencesKey.silentPaymentsCardDisplay) ?? true,
+      mwebAlwaysScan: sharedPreferences.getBool(PreferencesKey.mwebAlwaysScan) ?? false,
+      mwebCardDisplay: false,
+      showZcashMissingFundsCard: false,
+      mwebEnabled: sharedPreferences.getBool(PreferencesKey.mwebEnabled) ?? false,
+      mwebNodeUri: sharedPreferences.getString(PreferencesKey.mwebNodeUri) ?? '',
+      hasEnabledMwebBefore: sharedPreferences.getBool(PreferencesKey.hasEnabledMwebBefore) ?? false,
+      forceDecentralizedExchanges: sharedPreferences.getBool(PreferencesKey.forceDecentralizedExchanges) ?? false,
+      decentralizedExchangesPromptDismissed: sharedPreferences.getBool(PreferencesKey.decentralizedExchangesPromptDismissed) ?? false,
+      initialEnableAutomaticNodeSwitching: true,
+      initialBackgroundImage: '',
+      initialSyncMode: SyncMode.disabled,
+      initialSyncAll: false,
+      shouldShowYatPopup: false,
+      shouldShowDEuroDisclaimer: false,
+      shouldShowRepWarning: false,
+      initialBuiltinTor: builtinTor,
+      mwebAdDismissed: true,
+      initialShouldRequireTOTP2FAForAccessingWallet: false,
+      initialShouldRequireTOTP2FAForSendsToContact: false,
+      initialShouldRequireTOTP2FAForSendsToNonContact: false,
+      initialShouldRequireTOTP2FAForSendsToInternalWallets: false,
+      initialShouldRequireTOTP2FAForExchangesToInternalWallets: false,
+      initialShouldRequireTOTP2FAForExchangesToExternalWallets: false,
+      initialShouldRequireTOTP2FAForAddingContacts: false,
+      initialShouldRequireTOTP2FAForCreatingNewWallets: false,
+      initialShouldRequireTOTP2FAForAllSecurityAndBackupSettings: false,
+    );
+  }
+
   Future<void> reload({required Box<Node> nodeSource}) async {
     final sharedPreferences = await getIt.getAsync<SharedPreferences>();
 
