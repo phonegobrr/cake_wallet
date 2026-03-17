@@ -21,11 +21,37 @@ class SendCommand extends WalletCommand<SendResult> {
       };
 
   @override
+  bool get isSafeForNonInteractive => false;
+
+  @override
   Future<CommandResult<SendResult>> execute(
     CakeRuntimeContext ctx,
     Map<String, dynamic> params,
   ) async {
-    ctx.logger.info('Creating transaction...');
-    return CommandResult.error('NO_WALLET', message: ctx.strings.noWalletOpen);
+    final wallet = ctx.wallet;
+    if (wallet == null) {
+      return CommandResult.error('NO_WALLET', message: ctx.strings.noWalletOpen);
+    }
+
+    final address = params['address'] as String;
+    final amount = params['amount'] as String;
+
+    ctx.logger.info(
+        'Preparing transaction: $amount ${wallet.currency.title} -> $address');
+
+    // Transaction creation requires wallet-type-specific credential building.
+    // The actual implementation will be wired through a send service that
+    // creates credentials, calls wallet.createTransaction(), and commits.
+    // For now, return the validated parameters as a preview.
+    return CommandResult.ok(
+      SendResult(
+        txHash: '',
+        amount: amount,
+        address: address,
+        fee: '0',
+      ),
+      message: 'Send command received — full transaction creation '
+          'requires wallet-type-specific credential building',
+    );
   }
 }

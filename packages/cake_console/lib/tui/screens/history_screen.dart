@@ -40,7 +40,7 @@ class HistoryScreen implements TuiScreen {
       ..rows(_txs.map((tx) => [
             tx.dateFormatted,
             tx.isIncoming ? 'IN ' : 'OUT',
-            tx.amountFormatted,
+            tx.amount,
             '${tx.confirmations}',
             tx.isPending ? 'Pending' : 'Confirmed',
           ]).toList())

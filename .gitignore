@@ -222,3 +222,7 @@ scripts/zcash_lib
 scripts/android/yttrium
 scripts/bitbox_flutter
 scripts/reown_flutter
+
+# TUI
+packages/cake_console/build/
+packages/cake_console/build_review/

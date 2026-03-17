@@ -57,7 +57,7 @@ class DashboardScreen implements TuiScreen {
         ..rows(_recentTxs.map((tx) => [
               tx.dateFormatted,
               tx.isIncoming ? 'IN ' : 'OUT',
-              tx.amountFormatted,
+              tx.amount,
               tx.isPending ? 'Pending' : 'Confirmed',
             ]).toList())
         ..borderDef(roundedBorder)

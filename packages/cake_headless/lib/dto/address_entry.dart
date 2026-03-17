@@ -1,17 +1,20 @@
 class AddressEntry {
   final String address;
   final String? label;
-  final int index;
+  final String? currencyTitle;
+  final int? index;
 
   const AddressEntry({
     required this.address,
     this.label,
-    required this.index,
+    this.currencyTitle,
+    this.index,
   });
 
   Map<String, dynamic> toJson() => {
         'address': address,
         if (label != null) 'label': label,
-        'index': index,
+        if (currencyTitle != null) 'currency': currencyTitle,
+        if (index != null) 'index': index,
       };
 }

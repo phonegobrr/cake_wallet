@@ -16,7 +16,16 @@ class GetReceiveAddressCommand extends WalletCommand<AddressEntry> {
     CakeRuntimeContext ctx,
     Map<String, dynamic> params,
   ) async {
-    ctx.logger.info('Getting receive address...');
-    return CommandResult.error('NO_WALLET', message: ctx.strings.noWalletOpen);
+    final wallet = ctx.wallet;
+    if (wallet == null) {
+      return CommandResult.error('NO_WALLET', message: ctx.strings.noWalletOpen);
+    }
+
+    final address = wallet.walletAddresses.address;
+    return CommandResult.ok(AddressEntry(
+      address: address,
+      label: wallet.walletInfo.name,
+      currencyTitle: wallet.currency.title,
+    ));
   }
 }
