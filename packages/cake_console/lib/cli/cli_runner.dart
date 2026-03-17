@@ -128,9 +128,6 @@ class CompoundCliCommand extends Command<void> {
   @override
   final String description;
 
-  final CommandBus _bus;
-  final bool Function() _isJsonMode;
-
   CompoundCliCommand({
     required String groupName,
     required String groupDescription,
@@ -138,9 +135,7 @@ class CompoundCliCommand extends Command<void> {
     required CommandBus bus,
     required bool Function() isJsonMode,
   })  : name = groupName,
-        description = groupDescription,
-        _bus = bus,
-        _isJsonMode = isJsonMode {
+        description = groupDescription {
     for (final cmd in commands) {
       final parts = cmd.name.split('.');
       final subName = parts.length > 1 ? parts.skip(1).join('-') : parts[0];

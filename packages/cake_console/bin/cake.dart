@@ -150,10 +150,7 @@ void _registerCliSubcommands(
         isJsonMode: () => _isJson(args),
       ));
     } else if (commands.length == 1) {
-      // Single dotted command — register as flat command
-      final subName = commands.first.name.split('.').skip(1).join('-');
-      // Register both the group name pointing to the first subcommand
-      // and the flat name
+      // Single dotted command — register group name pointing to the subcommand
       try {
         runner.addCommand(HeadlessCliCommand(
           name: group,

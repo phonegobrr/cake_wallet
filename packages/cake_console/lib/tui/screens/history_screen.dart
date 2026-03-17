@@ -1,5 +1,4 @@
 import 'package:dart_lipgloss/dart_lipgloss.dart';
-import 'package:dart_lipgloss/table.dart' as lip_table;
 import 'package:cake_headless/commands/command_bus.dart';
 import 'package:cake_headless/dto/transaction_summary.dart';
 import 'package:cake_console/tui/tui_theme.dart';

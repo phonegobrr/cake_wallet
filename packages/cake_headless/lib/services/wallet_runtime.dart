@@ -1,4 +1,3 @@
-import 'package:cake_headless/events/wallet_event.dart';
 import 'package:cake_headless/runtime_context.dart';
 import 'package:cw_core/wallet_info.dart';
 
