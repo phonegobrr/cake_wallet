@@ -24,8 +24,9 @@ Future<void> main(List<String> args) async {
   final storageKey = await _getOrCreateEncryptionKey('$appDir/.storage_key');
   final secureStorage = FileSecureStorage('$appDir/.secure_storage', storageKey);
 
-  // For MCP mode, don't use stdin-based interaction (stdin is JSON-RPC)
-  final isMcpMode = args.isNotEmpty && args[0] == 'mcp';
+  // For MCP mode, don't use stdin-based interaction (stdin is JSON-RPC).
+  // Scan all args so `cake --json mcp` or `cake --data-dir=/x mcp` is detected.
+  final isMcpMode = args.contains('mcp');
   final UserInteractionPort interaction = isMcpMode
       ? NoOpUserInteraction()
       : StdinUserInteraction(autoConfirm: useYes);
