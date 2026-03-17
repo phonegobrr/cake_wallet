@@ -2,7 +2,6 @@ import 'package:cake_headless/commands/command.dart';
 import 'package:cake_headless/commands/command_result.dart';
 import 'package:cake_headless/dto/address_entry.dart';
 import 'package:cake_headless/runtime_context.dart';
-import 'package:cw_core/wallet_base.dart';
 
 class GetReceiveAddressCommand extends WalletCommand<AddressEntry> {
   @override
@@ -28,5 +27,108 @@ class GetReceiveAddressCommand extends WalletCommand<AddressEntry> {
       label: wallet.walletInfo.name,
       currencyTitle: wallet.currency.title,
     ));
+  }
+}
+
+class ListAddressesCommand extends WalletCommand<List<AddressEntry>> {
+  @override
+  String get name => 'receive.list';
+  @override
+  String get description => 'List all receive addresses';
+  @override
+  Map<String, CommandArg> get args => {};
+
+  @override
+  Future<CommandResult<List<AddressEntry>>> execute(
+    CakeRuntimeContext ctx,
+    Map<String, dynamic> params,
+  ) async {
+    if (!ctx.hasWallet) {
+      return CommandResult.error('NO_WALLET', message: ctx.strings.noWalletOpen);
+    }
+    final wallet = ctx.wallet!;
+    try {
+      final addresses = wallet.walletAddresses.addressesMap.entries
+          .map((e) => AddressEntry(
+                address: e.key,
+                label: e.value,
+                currencyTitle: wallet.currency.title,
+              ))
+          .toList();
+      if (addresses.isEmpty) {
+        return CommandResult.ok([
+          AddressEntry(
+            address: wallet.walletAddresses.address,
+            label: 'Primary',
+            currencyTitle: wallet.currency.title,
+          )
+        ]);
+      }
+      return CommandResult.ok(addresses);
+    } catch (_) {
+      return CommandResult.ok([
+        AddressEntry(
+          address: wallet.walletAddresses.address,
+          label: 'Primary',
+          currencyTitle: wallet.currency.title,
+        )
+      ]);
+    }
+  }
+}
+
+class GenerateNewAddressCommand extends WalletCommand<AddressEntry> {
+  @override
+  String get name => 'receive.new';
+  @override
+  String get description => 'Generate a new receive address (subaddress)';
+  @override
+  Map<String, CommandArg> get args => {
+        'label':
+            CommandArg(name: 'label', description: 'Label for the new address'),
+      };
+
+  @override
+  Future<CommandResult<AddressEntry>> execute(
+    CakeRuntimeContext ctx,
+    Map<String, dynamic> params,
+  ) async {
+    if (!ctx.hasWallet) {
+      return CommandResult.error('NO_WALLET', message: ctx.strings.noWalletOpen);
+    }
+    // Subaddress generation is wallet-type specific
+    return CommandResult.error('SERVICE_UNAVAILABLE',
+        message: 'Subaddress generation requires wallet-type-specific logic. '
+            'Use receive.address for the current primary address.');
+  }
+}
+
+class GetReceiveUriCommand extends WalletCommand<Map<String, String>> {
+  @override
+  String get name => 'receive.uri';
+  @override
+  String get description => 'Get a payment URI for the current address';
+  @override
+  Map<String, CommandArg> get args => {
+        'amount':
+            CommandArg(name: 'amount', description: 'Amount to request'),
+      };
+
+  @override
+  Future<CommandResult<Map<String, String>>> execute(
+    CakeRuntimeContext ctx,
+    Map<String, dynamic> params,
+  ) async {
+    if (!ctx.hasWallet) {
+      return CommandResult.error('NO_WALLET', message: ctx.strings.noWalletOpen);
+    }
+    final wallet = ctx.wallet!;
+    final address = wallet.walletAddresses.address;
+    final amount = params['amount']?.toString();
+    final scheme = wallet.currency.title.toLowerCase();
+    final uri = amount != null
+        ? '$scheme:$address?amount=$amount'
+        : '$scheme:$address';
+    return CommandResult.ok({'uri': uri, 'address': address});
   }
 }

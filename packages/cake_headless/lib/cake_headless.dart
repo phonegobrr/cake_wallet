@@ -29,6 +29,8 @@ export 'commands/settings_commands.dart';
 export 'commands/swap_commands.dart';
 export 'commands/contact_commands.dart';
 export 'commands/backup_commands.dart';
+export 'commands/tor_commands.dart';
+export 'commands/unsupported_commands.dart';
 
 // DTOs
 export 'dto/wallet_summary.dart';

@@ -8,6 +8,8 @@ import 'package:cake_headless/commands/settings_commands.dart';
 import 'package:cake_headless/commands/swap_commands.dart';
 import 'package:cake_headless/commands/contact_commands.dart';
 import 'package:cake_headless/commands/backup_commands.dart';
+import 'package:cake_headless/commands/tor_commands.dart';
+import 'package:cake_headless/commands/unsupported_commands.dart';
 import 'package:cake_headless/runtime_context.dart';
 import 'package:cake_headless/services/wallet_lock.dart';
 import 'package:cw_core/root_dir.dart';
@@ -34,8 +36,12 @@ Future<CommandBus> bootstrap(CakeRuntimeContext ctx) async {
   // Send / Receive
   bus.register(SendCommand());
   bus.register(GetReceiveAddressCommand());
+  bus.register(ListAddressesCommand());
+  bus.register(GenerateNewAddressCommand());
+  bus.register(GetReceiveUriCommand());
 
   // History
+  bus.register(GetTransactionDetailsCommand());
   bus.register(ListTransactionsCommand());
 
   // Nodes
@@ -52,6 +58,7 @@ Future<CommandBus> bootstrap(CakeRuntimeContext ctx) async {
   bus.register(GetSyncStatusCommand());
 
   // Exchange / Swap
+  bus.register(CreateSwapCommand());
   bus.register(GetSwapQuoteCommand());
   bus.register(GetSwapStatusCommand());
 
@@ -62,7 +69,18 @@ Future<CommandBus> bootstrap(CakeRuntimeContext ctx) async {
 
   // Backup
   bus.register(ExportBackupCommand());
+  bus.register(VerifyBackupCommand());
   bus.register(ImportBackupCommand());
+
+  // Tor
+  bus.register(TorStatusCommand());
+  bus.register(TorEnableCommand());
+  bus.register(TorDisableCommand());
+
+  // Unsupported platform stubs
+  for (final cmd in createUnsupportedCommands()) {
+    bus.register(cmd);
+  }
 
   return bus;
 }

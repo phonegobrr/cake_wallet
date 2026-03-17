@@ -5,6 +5,45 @@ import 'package:cake_headless/runtime_context.dart';
 import 'package:cw_core/transaction_direction.dart';
 import 'package:cw_core/wallet_base.dart';
 
+class GetTransactionDetailsCommand extends WalletCommand<TransactionSummary> {
+  @override
+  String get name => 'history.details';
+  @override
+  String get description => 'Get details of a specific transaction';
+  @override
+  Map<String, CommandArg> get args => {
+        'id': CommandArg(
+            name: 'id', description: 'Transaction ID', required: true),
+      };
+
+  @override
+  Future<CommandResult<TransactionSummary>> execute(
+    CakeRuntimeContext ctx,
+    Map<String, dynamic> params,
+  ) async {
+    if (!ctx.hasWallet) {
+      return CommandResult.error('NO_WALLET', message: ctx.strings.noWalletOpen);
+    }
+    final wallet = ctx.wallet!;
+    final txId = params['id']?.toString() ?? '';
+    final history = wallet.transactionHistory;
+    final tx = history.transactions[txId];
+    if (tx == null) {
+      return CommandResult.error('NOT_FOUND',
+          message: 'Transaction "$txId" not found');
+    }
+    return CommandResult.ok(TransactionSummary(
+      id: tx.id,
+      amount: tx.amountFormatted(),
+      fee: tx.feeFormatted() ?? '0',
+      dateFormatted: tx.date.toIso8601String(),
+      isIncoming: tx.direction == TransactionDirection.incoming,
+      isPending: tx.isPending,
+      confirmations: tx.confirmations,
+    ));
+  }
+}
+
 class ListTransactionsCommand extends WalletCommand<List<TransactionSummary>> {
   @override
   String get name => 'history.list';

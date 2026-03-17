@@ -24,7 +24,7 @@ class ExportBackupCommand extends WalletCommand<BackupResult> {
     CakeRuntimeContext ctx,
     Map<String, dynamic> params,
   ) async {
-    final output = params['output'] as String;
+    final output = params['output']?.toString() ?? '';
 
     if (ctx.exportBackup == null) {
       return CommandResult.error('SERVICE_UNAVAILABLE',
@@ -37,6 +37,29 @@ class ExportBackupCommand extends WalletCommand<BackupResult> {
     } catch (e) {
       return CommandResult.error('BACKUP_EXPORT_FAILED', message: e.toString());
     }
+  }
+}
+
+class VerifyBackupCommand extends WalletCommand<Map<String, String>> {
+  @override
+  String get name => 'backup.verify';
+  @override
+  String get description => 'Verify a backup file is readable';
+  @override
+  Map<String, CommandArg> get args => {
+        'input': CommandArg(
+            name: 'input',
+            description: 'Backup file path to verify',
+            required: true),
+      };
+
+  @override
+  Future<CommandResult<Map<String, String>>> execute(
+    CakeRuntimeContext ctx,
+    Map<String, dynamic> params,
+  ) async {
+    return CommandResult.error('SERVICE_UNAVAILABLE',
+        message: 'Backup verification requires decryption service');
   }
 }
 
@@ -61,7 +84,7 @@ class ImportBackupCommand extends WalletCommand<BackupResult> {
     CakeRuntimeContext ctx,
     Map<String, dynamic> params,
   ) async {
-    final input = params['input'] as String;
+    final input = params['input']?.toString() ?? '';
 
     if (ctx.importBackup == null) {
       return CommandResult.error('SERVICE_UNAVAILABLE',
