@@ -1,0 +1,22 @@
+name: cake_console
+description: Unified CLI/TUI/MCP binary for Cake Wallet
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: '>=3.0.6 <4.0.0'
+
+executables:
+  cake: cake
+
+dependencies:
+  cake_headless:
+    path: ../cake_headless
+  dart_lipgloss:
+    path: /Users/ric/Desktop/working/dart_lipgloss
+  args: ^2.5.0
+  cw_core:
+    path: ../../cw_core
+
+dev_dependencies:
+  test: ^1.25.0
