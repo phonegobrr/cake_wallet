@@ -24,6 +24,7 @@ Future<CommandBus> bootstrap(CakeRuntimeContext ctx) async {
 
   final lock = WalletLock();
   await lock.acquire(appDir);
+  ctx.walletLock = lock;
 
   final bus = CommandBus(ctx);
 

@@ -81,67 +81,131 @@ class TerminalDriver {
   Stream<TerminalEvent> get events {
     _controller ??= StreamController<TerminalEvent>.broadcast();
     _sub ??= stdin.listen((data) {
-      _controller!.add(_parseInput(data));
+      // Parse all events from the data chunk (handles rapid input/paste)
+      for (final event in _parseInput(data)) {
+        _controller!.add(event);
+      }
     });
     return _controller!.stream;
   }
 
-  TerminalEvent _parseInput(List<int> data) {
-    if (data.length == 1) {
-      switch (data[0]) {
+  /// Parse raw terminal input bytes into a list of events.
+  /// Handles multiple key sequences in a single data chunk (paste, rapid typing).
+  List<TerminalEvent> _parseInput(List<int> data) {
+    final events = <TerminalEvent>[];
+    int i = 0;
+    while (i < data.length) {
+      // ESC sequences
+      if (data[i] == 27) {
+        // Check for ESC [ sequences
+        if (i + 1 < data.length && data[i + 1] == 91) {
+          // ESC [ n ~ sequences (delete, pgup, pgdn)
+          if (i + 3 < data.length && data[i + 3] == 126) {
+            switch (data[i + 2]) {
+              case 51:
+                events.add(TerminalEvent(TerminalKey.delete));
+                break;
+              case 53:
+                events.add(TerminalEvent(TerminalKey.pageUp));
+                break;
+              case 54:
+                events.add(TerminalEvent(TerminalKey.pageDown));
+                break;
+              default:
+                events.add(TerminalEvent(TerminalKey.escape));
+                i++;
+                continue;
+            }
+            i += 4;
+            continue;
+          }
+          // ESC [ X sequences (arrows, home, end, shift-tab)
+          if (i + 2 < data.length) {
+            switch (data[i + 2]) {
+              case 65:
+                events.add(TerminalEvent(TerminalKey.up));
+                i += 3;
+                continue;
+              case 66:
+                events.add(TerminalEvent(TerminalKey.down));
+                i += 3;
+                continue;
+              case 67:
+                events.add(TerminalEvent(TerminalKey.right));
+                i += 3;
+                continue;
+              case 68:
+                events.add(TerminalEvent(TerminalKey.left));
+                i += 3;
+                continue;
+              case 72:
+                events.add(TerminalEvent(TerminalKey.home));
+                i += 3;
+                continue;
+              case 70:
+                events.add(TerminalEvent(TerminalKey.end));
+                i += 3;
+                continue;
+              case 90:
+                events.add(TerminalEvent(TerminalKey.shiftTab));
+                i += 3;
+                continue;
+            }
+          }
+        }
+        // Bare ESC
+        events.add(TerminalEvent(TerminalKey.escape));
+        i++;
+        continue;
+      }
+      // Single-byte control/ASCII characters
+      switch (data[i]) {
         case 3:
-          return TerminalEvent(TerminalKey.ctrlC);
+          events.add(TerminalEvent(TerminalKey.ctrlC));
+          break;
         case 10:
         case 13:
-          return TerminalEvent(TerminalKey.enter);
-        case 27:
-          return TerminalEvent(TerminalKey.escape);
+          events.add(TerminalEvent(TerminalKey.enter));
+          break;
         case 127:
-          return TerminalEvent(TerminalKey.backspace);
+          events.add(TerminalEvent(TerminalKey.backspace));
+          break;
         case 9:
-          return TerminalEvent(TerminalKey.tab);
+          events.add(TerminalEvent(TerminalKey.tab));
+          break;
         default:
-          return TerminalEvent(TerminalKey.char, String.fromCharCode(data[0]));
+          // Multi-byte UTF-8 codepoint
+          if (data[i] >= 0xC0) {
+            int byteCount = 1;
+            if (data[i] >= 0xF0) {
+              byteCount = 4;
+            } else if (data[i] >= 0xE0) {
+              byteCount = 3;
+            } else {
+              byteCount = 2;
+            }
+            final end = (i + byteCount).clamp(0, data.length);
+            final char = String.fromCharCodes(data.sublist(i, end));
+            events.add(TerminalEvent(TerminalKey.char, char));
+            i = end;
+            continue;
+          }
+          // Regular ASCII character
+          events.add(
+              TerminalEvent(TerminalKey.char, String.fromCharCode(data[i])));
+          break;
       }
+      i++;
     }
-    // ESC [ sequences
-    if (data.length == 3 && data[0] == 27 && data[1] == 91) {
-      switch (data[2]) {
-        case 65:
-          return TerminalEvent(TerminalKey.up);
-        case 66:
-          return TerminalEvent(TerminalKey.down);
-        case 67:
-          return TerminalEvent(TerminalKey.right);
-        case 68:
-          return TerminalEvent(TerminalKey.left);
-        case 72:
-          return TerminalEvent(TerminalKey.home);
-        case 70:
-          return TerminalEvent(TerminalKey.end);
-        case 90:
-          return TerminalEvent(TerminalKey.shiftTab);
-      }
-    }
-    // ESC [ n ~ sequences
-    if (data.length == 4 && data[0] == 27 && data[1] == 91 && data[3] == 126) {
-      switch (data[2]) {
-        case 51:
-          return TerminalEvent(TerminalKey.delete);
-        case 53:
-          return TerminalEvent(TerminalKey.pageUp);
-        case 54:
-          return TerminalEvent(TerminalKey.pageDown);
-      }
-    }
-    return TerminalEvent(TerminalKey.char, String.fromCharCodes(data));
+    return events;
   }
 
   void dispose() {
-    _sub?.cancel();
-    _controller?.close();
-    exitAlternateScreen();
-    disableRawMode();
-    showCursor();
+    try { _sub?.cancel(); } catch (_) {}
+    try { _controller?.close(); } catch (_) {}
+    _sub = null;
+    _controller = null;
+    // Terminal state restoration is handled by TuiApp._cleanup(),
+    // not here — dispose() is only for resource cleanup.
   }
 }

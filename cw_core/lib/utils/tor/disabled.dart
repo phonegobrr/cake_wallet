@@ -11,13 +11,17 @@ class CakeTorDisabled implements CakeTorInstance {
   int get port => -1;
 
   @override
-  Future<void> start() => throw UnimplementedError();
+  Future<void> start() async {
+    // No-op: Tor not available on this platform
+  }
 
   @override
   bool get started => false;
 
   @override
-  Future<void> stop() => throw UnimplementedError();
+  Future<void> stop() async {
+    // No-op: Tor not available on this platform
+  }
 
   @override
   String toString() {

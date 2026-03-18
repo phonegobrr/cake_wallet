@@ -25,9 +25,10 @@ Future<void> main(List<String> args) async {
   final secureStorage = FileSecureStorage('$appDir/.secure_storage', storageKey);
 
   // For MCP mode, don't use stdin-based interaction (stdin is JSON-RPC).
-  // Scan all args so `cake --json mcp` or `cake --data-dir=/x mcp` is detected.
-  final isMcpMode = args.contains('mcp');
-  final UserInteractionPort interaction = isMcpMode
+  // Only match 'mcp' as a positional arg, not inside flag values like --data-dir=/path/mcp_stuff.
+  final isMcpMode = args.where((a) => !a.startsWith('-')).contains('mcp');
+  final isNonInteractive = isMcpMode || !stdin.hasTerminal || args.contains('--yes');
+  final UserInteractionPort interaction = isNonInteractive
       ? NoOpUserInteraction()
       : StdinUserInteraction(autoConfirm: useYes);
 
@@ -41,7 +42,7 @@ Future<void> main(List<String> args) async {
   );
   ctx.noColor = noColor;
   ctx.autoConfirm = useYes;
-  ctx.nonInteractive = isMcpMode;
+  ctx.nonInteractive = isNonInteractive;
   ctx.jsonMode = args.contains('--json');
 
   // Initialize Hive, SQLite, and register cw_core adapters + GetIt singletons
@@ -84,15 +85,15 @@ Future<void> main(List<String> args) async {
     }
   }
 
-  // Graceful shutdown
-  final lock = WalletLock();
+  // Graceful shutdown — reuse the lock acquired by bootstrap()
+  final lock = ctx.walletLock;
   ProcessSignal.sigint.watch().listen((_) {
-    lock.release();
+    lock?.release();
     exit(0);
   });
   if (!Platform.isWindows) {
     ProcessSignal.sigterm.watch().listen((_) {
-      lock.release();
+      lock?.release();
       exit(0);
     });
   }
@@ -170,8 +171,8 @@ void _registerCliSubcommands(
           bus: bus,
           isJsonMode: () => _isJson(args),
         ));
-      } catch (_) {
-        // Already registered
+      } on ArgumentError catch (_) {
+        // Already registered — expected for shared prefix groups
       }
     } else {
       // Multiple commands in the group — create a compound command
@@ -190,14 +191,16 @@ void _registerCliSubcommands(
 /// No-op interaction port for MCP mode where stdin is reserved for JSON-RPC.
 class NoOpUserInteraction implements UserInteractionPort {
   @override
-  Future<bool> confirm(String message) async => false;
+  Future<bool> confirm(String message) async =>
+      throw StateError(
+          'CONFIRMATION_REQUIRED: Non-interactive mode cannot confirm: $message');
 
   @override
   Future<String?> promptText(String message, {bool obscure = false}) async =>
       throw StateError(
-          'Interactive input not available in MCP mode. Use --yes flag or provide all arguments.');
+          'Interactive input not available in non-interactive mode. Use --yes flag or provide all arguments.');
 
   @override
   Future<int?> pickOption(String message, List<String> options) async =>
-      throw StateError('Interactive input not available in MCP mode.');
+      throw StateError('Interactive input not available in non-interactive mode.');
 }

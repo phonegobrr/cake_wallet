@@ -13,6 +13,7 @@ import 'package:cake_headless/ports/user_interaction_port.dart';
 import 'package:cake_headless/events/event_bus.dart';
 import 'package:cake_headless/i18n/app_strings.dart';
 import 'package:cake_headless/i18n/default_app_strings.dart';
+import 'package:cake_headless/services/wallet_lock.dart';
 import 'package:cw_core/wallet_base.dart';
 import 'package:cw_core/wallet_info.dart';
 
@@ -100,6 +101,12 @@ class CakeRuntimeContext {
 
   /// Callback to import an encrypted backup from the given path.
   Future<BackupResult> Function(String inputPath)? importBackup;
+
+  /// Callback to connect the current wallet to its node and start sync.
+  Future<void> Function()? connectAndSync;
+
+  /// The wallet lock acquired during bootstrap. Used for graceful shutdown.
+  WalletLock? walletLock;
 
   /// Runtime mode flags
   bool nonInteractive = false;

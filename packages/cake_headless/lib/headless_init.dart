@@ -12,6 +12,8 @@ import 'package:cw_core/spl_token.dart';
 import 'package:cw_core/tron_token.dart';
 import 'package:cw_core/unspent_coins_info.dart';
 import 'package:cw_core/wallet_type.dart';
+import 'package:cw_core/utils/proxy_wrapper.dart';
+import 'package:cw_core/utils/tor/disabled.dart';
 import 'package:get_it/get_it.dart';
 
 /// Minimal headless initialization using only cw_core types (no Flutter).
@@ -32,6 +34,9 @@ Future<void> initializeHeadlessCore({
   required SecureStorage secureStorage,
 }) async {
   setRootDirOverride(dataDir);
+
+  // Initialize CakeTor with disabled implementation for headless mode
+  CakeTor.instance ??= CakeTorDisabled();
 
   // Initialize Hive
   CakeHive.init(dataDir);

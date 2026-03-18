@@ -26,6 +26,7 @@ class TuiApp {
   StreamSubscription? _eventSub;
   Timer? _refreshTimer;
   bool _rendering = false;
+  bool _cleaned = false;
 
   // Hotkey-to-tab mapping
   static const _hotkeyMap = {
@@ -205,8 +206,11 @@ class TuiApp {
   }
 
   void _cleanup() {
+    if (_cleaned) return;
+    _cleaned = true;
     _refreshTimer?.cancel();
     _eventSub?.cancel();
+    terminal.disableRawMode();
     terminal.exitAlternateScreen();
     terminal.showCursor();
     terminal.dispose();
