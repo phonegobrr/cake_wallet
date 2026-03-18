@@ -75,9 +75,16 @@ class GetBalanceCommand extends WalletCommand<BalanceSnapshot> {
       }
     })();
     // Try to get formatted amounts using the wallet's currency formatter
-    String? formatAmount(dynamic raw) {
+    String? tryFormat(dynamic raw) {
       try {
-        return wallet.currency.formatAmount(raw.toString());
+        if (raw is BigInt) {
+          return wallet.currency.formatAmount(raw);
+        }
+        final parsed = BigInt.tryParse(raw.toString());
+        if (parsed != null) {
+          return wallet.currency.formatAmount(parsed);
+        }
+        return null;
       } catch (_) {
         return null;
       }
@@ -88,9 +95,9 @@ class GetBalanceCommand extends WalletCommand<BalanceSnapshot> {
       pending: primaryBalance.additional.toString(),
       frozen: frozen.toString(),
       currencyTitle: wallet.currency.title,
-      availableFormatted: formatAmount(primaryBalance.available),
-      pendingFormatted: formatAmount(primaryBalance.additional),
-      frozenFormatted: formatAmount(frozen),
+      availableFormatted: tryFormat(primaryBalance.available),
+      pendingFormatted: tryFormat(primaryBalance.additional),
+      frozenFormatted: tryFormat(frozen),
     ));
   }
 }
@@ -132,6 +139,8 @@ class OpenWalletCommand extends WalletCommand<WalletSummary> {
 
     try {
       await ctx.loadWallet!(walletName, typeRaw);
+      // Wire post-load hooks (e.g. MobX reactions) BEFORE sync starts
+      ctx.onWalletLoaded?.call();
       // Connect to node and start sync after loading
       if (ctx.connectAndSync != null) {
         try {
@@ -142,8 +151,6 @@ class OpenWalletCommand extends WalletCommand<WalletSummary> {
       }
       ctx.eventBus.emit(WalletEvent(WalletEventType.walletOpened,
           data: {'name': walletName, 'type': typeRaw}));
-      // Notify runtime to wire post-load hooks (e.g. MobX reactions)
-      ctx.onWalletLoaded?.call();
       return CommandResult.ok(
         WalletSummary(
           name: walletName,
