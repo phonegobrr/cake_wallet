@@ -3,25 +3,23 @@ import 'dart:io';
 
 import 'package:cake_headless/commands/command_result.dart';
 
-/// Serializes any DTO or value to a JSON-friendly map.
-Map<String, dynamic> serializeData(dynamic data) {
-  if (data == null) return {};
+/// Serializes any DTO or value to a JSON-serializable form.
+/// Preserves the real JSON shape: maps stay maps, lists stay lists, scalars stay scalars.
+dynamic serializeData(dynamic data) {
+  if (data == null) return null;
+  if (data is String || data is num || data is bool) return data;
   if (data is Map<String, dynamic>) return data;
   if (data is Map) return Map<String, dynamic>.from(data);
   if (data is List) {
-    return {
-      'items': data.map((e) => serializeData(e)).toList(),
-    };
-  }
-  if (data is String || data is num || data is bool) {
-    return {'value': data};
+    return data.map((e) => serializeData(e)).toList();
   }
   try {
     final result = (data as dynamic).toJson();
     if (result is Map<String, dynamic>) return result;
-    return {'value': result.toString()};
+    if (result is Map) return Map<String, dynamic>.from(result);
+    return result;
   } catch (_) {
-    return {'value': data.toString()};
+    return data.toString();
   }
 }
 
@@ -49,6 +47,10 @@ void outputText(CommandResult result) {
   if (!result.success) {
     stderr.writeln(
         'Error: ${result.message ?? result.errorCode ?? "Unknown error"}');
+    return;
+  }
+  if (result.data == null && result.message == null) {
+    stdout.writeln('OK');
     return;
   }
   if (result.message != null) {

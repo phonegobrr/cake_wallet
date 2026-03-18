@@ -32,6 +32,12 @@ class WalletListScreen extends TuiScreen {
     } catch (_) {
       _wallets = [];
     }
+    // Clamp selected index after list may have shrunk
+    if (_wallets.isNotEmpty) {
+      _selectedIndex = _selectedIndex.clamp(0, _wallets.length - 1);
+    } else {
+      _selectedIndex = 0;
+    }
     _isLoading = false;
   }
 

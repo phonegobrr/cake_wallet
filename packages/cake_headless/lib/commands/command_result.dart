@@ -13,7 +13,7 @@ class CommandResult<T> {
       : success = false,
         data = null;
 
-  Map<String, dynamic> toJson(Map<String, dynamic> Function(T) dataSerializer) => {
+  Map<String, dynamic> toJson(dynamic Function(T) dataSerializer) => {
         'success': success,
         if (data != null) 'data': dataSerializer(data as T),
         if (message != null) 'message': message,

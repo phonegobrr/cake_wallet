@@ -26,7 +26,10 @@ class TuiApp {
   StreamSubscription? _eventSub;
   Timer? _refreshTimer;
   bool _rendering = false;
+  bool _pendingRender = false;
   bool _cleaned = false;
+  bool _isRefreshing = false;
+  final Set<int> _initializedTabs = {};
 
   // Hotkey-to-tab mapping
   static const _hotkeyMap = {
@@ -41,7 +44,8 @@ class TuiApp {
   TuiApp({
     required this.commandBus,
     required this.eventBus,
-  }) : terminal = TerminalDriver() {
+    TerminalDriver? driver,
+  }) : terminal = driver ?? TerminalDriver() {
     screens = [
       DashboardScreen(commandBus),
       WalletListScreen(commandBus),
@@ -73,6 +77,17 @@ class TuiApp {
       });
       // Handle terminal resize
       ProcessSignal.sigwinch.watch().listen((_) => _render());
+    } else {
+      // Windows: poll for terminal resize since SIGWINCH doesn't exist
+      int lastWidth = terminal.width;
+      int lastHeight = terminal.height;
+      Timer.periodic(Duration(milliseconds: 500), (_) {
+        if (terminal.width != lastWidth || terminal.height != lastHeight) {
+          lastWidth = terminal.width;
+          lastHeight = terminal.height;
+          _render();
+        }
+      });
     }
 
     terminal.enableRawMode();
@@ -80,24 +95,37 @@ class TuiApp {
     terminal.hideCursor();
 
     try {
-      _eventSub = eventBus.events.listen((_) => _render());
+      // Subscribe to event bus with debounced refresh
+      _eventSub = eventBus.events.listen((_) => _scheduleRefresh());
 
       // Initialize and render first screen
       await screens[_activeTab].init();
+      _initializedTabs.add(_activeTab);
       await screens[_activeTab].refresh();
       screens[_activeTab].onEnter();
       _render();
 
-      // Periodic refresh for sync status, balance, etc.
+      // Start periodic refresh AFTER init completes
       _refreshTimer = Timer.periodic(Duration(seconds: 5), (_) async {
-        await screens[_activeTab].refresh();
-        _render();
+        await _safeRefresh();
       });
 
       await for (final event in terminal.events) {
         // Ctrl+C always quits
         if (event.key == TerminalKey.ctrlC) {
           break;
+        }
+
+        // Tab/Shift-Tab ALWAYS work, even when screen captures input (6.2)
+        if (event.key == TerminalKey.tab) {
+          await _switchTab((_activeTab + 1) % screens.length);
+          _render();
+          continue;
+        }
+        if (event.key == TerminalKey.shiftTab) {
+          await _switchTab((_activeTab - 1 + screens.length) % screens.length);
+          _render();
+          continue;
         }
 
         // 'q' quits only when the active screen doesn't capture input
@@ -119,20 +147,6 @@ class TuiApp {
           }
         }
 
-        // Tab/Shift-Tab only when active screen doesn't capture input
-        if (event.key == TerminalKey.tab &&
-            !screens[_activeTab].capturesInput) {
-          await _switchTab((_activeTab + 1) % screens.length);
-          _render();
-          continue;
-        }
-        if (event.key == TerminalKey.shiftTab &&
-            !screens[_activeTab].capturesInput) {
-          await _switchTab((_activeTab - 1 + screens.length) % screens.length);
-          _render();
-          continue;
-        }
-
         screens[_activeTab].handleInput(event);
         _render();
       }
@@ -149,16 +163,49 @@ class TuiApp {
     if (newTab == _activeTab) return;
     screens[_activeTab].onLeave();
     _activeTab = newTab;
+    if (!_initializedTabs.contains(newTab)) {
+      await screens[newTab].init();
+      _initializedTabs.add(newTab);
+    }
     screens[_activeTab].onEnter();
     await screens[_activeTab].refresh();
   }
 
+  /// Debounced refresh for burst events (sync/balance updates)
+  Timer? _refreshDebounce;
+  void _scheduleRefresh() {
+    _refreshDebounce?.cancel();
+    _refreshDebounce = Timer(Duration(milliseconds: 100), () async {
+      await _safeRefresh();
+    });
+  }
+
+  /// Safe refresh with serialization guard and error handling
+  Future<void> _safeRefresh() async {
+    if (_isRefreshing) return;
+    _isRefreshing = true;
+    try {
+      await screens[_activeTab].refresh();
+      _render();
+    } catch (e) {
+      stderr.writeln('[TUI] Refresh error: $e');
+    } finally {
+      _isRefreshing = false;
+    }
+  }
+
   void _render() {
-    if (_rendering) return;
+    if (_rendering) {
+      _pendingRender = true;
+      return;
+    }
     _rendering = true;
     try {
       final w = terminal.width;
       final h = terminal.height;
+
+      // Guard against absurdly small terminals
+      if (w < 20 || h < 5) return;
 
       // Header
       final header = headerStyle().width(w).render(' Cake Wallet TUI');
@@ -202,6 +249,10 @@ class TuiApp {
       stdout.write('Render error: $e\nPress Ctrl+C to quit.');
     } finally {
       _rendering = false;
+      if (_pendingRender) {
+        _pendingRender = false;
+        _render();
+      }
     }
   }
 
@@ -209,6 +260,7 @@ class TuiApp {
     if (_cleaned) return;
     _cleaned = true;
     _refreshTimer?.cancel();
+    _refreshDebounce?.cancel();
     _eventSub?.cancel();
     terminal.disableRawMode();
     terminal.exitAlternateScreen();

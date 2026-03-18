@@ -7,9 +7,34 @@ class WalletLock {
   /// Fails fast if another process holds the lock.
   Future<void> acquire(String walletDir) async {
     final lockPath = '$walletDir/.cake_wallet.lock';
+    final lockFile = File(lockPath);
+
+    // Check for stale lock: if the PID in the file is dead, clean up
+    if (await lockFile.exists()) {
+      try {
+        final content = (await lockFile.readAsString()).trim();
+        final existingPid = int.tryParse(content);
+        if (existingPid != null && existingPid != pid) {
+          try {
+            // Signal 0 tests if process exists without killing it
+            Process.killPid(existingPid, ProcessSignal.sigurg);
+            // Process is alive — lock is valid
+          } catch (_) {
+            // Process is dead — safe to take over
+            await lockFile.delete();
+          }
+        }
+      } catch (_) {
+        // Can't read lock file — try to proceed anyway
+      }
+    }
+
     _lockFile = await File(lockPath).open(mode: FileMode.write);
     try {
-      _lockFile!.lockSync(FileLock.exclusive);
+      // Windows doesn't support POSIX file locking the same way
+      if (!Platform.isWindows) {
+        _lockFile!.lockSync(FileLock.exclusive);
+      }
     } on FileSystemException {
       _lockFile!.closeSync();
       _lockFile = null;
@@ -23,7 +48,9 @@ class WalletLock {
 
   void release() {
     try {
-      _lockFile?.unlockSync();
+      if (!Platform.isWindows) {
+        _lockFile?.unlockSync();
+      }
     } catch (_) {}
     try {
       _lockFile?.closeSync();

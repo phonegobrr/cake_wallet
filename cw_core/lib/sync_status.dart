@@ -59,6 +59,13 @@ class SyncingSyncStatus extends SyncStatus {
 
   static void updateEtaHistory(int blocksLeft) {
     blockHistory[DateTime.now()] = blocksLeft;
+    // Trim history to prevent unbounded memory growth
+    if (blockHistory.length > 200) {
+      final sortedKeys = blockHistory.keys.toList()..sort();
+      for (final key in sortedKeys.take(blockHistory.length - 100)) {
+        blockHistory.remove(key);
+      }
+    }
   }
 
   static Map<DateTime, int> blockHistory = {};
