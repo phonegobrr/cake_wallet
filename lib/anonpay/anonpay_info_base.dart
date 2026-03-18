@@ -1,5 +1,1 @@
-abstract class AnonpayInfoBase {
-  String get clearnetUrl;
-  String get onionUrl;
-  String get address;
-}
+export 'package:cw_core/anonpay_info_base.dart';
