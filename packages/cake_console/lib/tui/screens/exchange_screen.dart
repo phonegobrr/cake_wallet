@@ -22,6 +22,9 @@ class ExchangeScreen extends TuiScreen {
   String get title => 'Exchange';
 
   @override
+  List<String> get supportedCommands => const ['swap.quote', 'swap.create', 'swap.status'];
+
+  @override
   bool get capturesInput => true;
 
   @override

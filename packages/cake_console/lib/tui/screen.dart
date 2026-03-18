@@ -23,4 +23,8 @@ abstract class TuiScreen {
 
   /// Callback to trigger re-render from async operations.
   void Function()? onStateChanged;
+
+  /// Declares the command names this screen supports.
+  /// Used for hotkey routing, manifest parity checks, and help text generation.
+  List<String> get supportedCommands => const [];
 }

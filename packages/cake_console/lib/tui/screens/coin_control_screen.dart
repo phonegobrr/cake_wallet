@@ -19,6 +19,9 @@ class CoinControlScreen extends TuiScreen {
   String get title => 'Coins';
 
   @override
+  List<String> get supportedCommands => const ['coins.list', 'coins.freeze', 'coins.unfreeze'];
+
+  @override
   Future<void> init() async => refresh();
 
   @override

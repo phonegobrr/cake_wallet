@@ -622,3 +622,82 @@ class SyncStopCommand extends WalletCommand<Map<String, String>> {
     }
   }
 }
+
+class SignMessageCommand extends WalletCommand<Map<String, String>> {
+  @override
+  String get name => 'wallet.sign';
+  @override
+  String get description => 'Sign a message with wallet key';
+  @override
+  Map<String, CommandArg> get args => {
+        'message': CommandArg(
+            name: 'message', description: 'Message to sign', required: true),
+        'address': CommandArg(
+            name: 'address', description: 'Address to sign with (optional)'),
+      };
+
+  @override
+  bool get isSafeForNonInteractive => false;
+
+  @override
+  Future<CommandResult<Map<String, String>>> execute(
+    CakeRuntimeContext ctx,
+    Map<String, dynamic> params,
+  ) async {
+    if (!ctx.hasWallet) {
+      return CommandResult.error('NO_WALLET', message: ctx.strings.noWalletOpen);
+    }
+    final message = params['message']?.toString() ?? '';
+    final address = params['address']?.toString();
+
+    try {
+      final signature = await ctx.wallet!.signMessage(message, address: address);
+      return CommandResult.ok(
+        {'signature': signature, 'message': message},
+        message: 'Message signed',
+      );
+    } catch (e) {
+      return CommandResult.error('SIGN_FAILED', message: e.toString());
+    }
+  }
+}
+
+class VerifyMessageCommand extends WalletCommand<Map<String, dynamic>> {
+  @override
+  String get name => 'wallet.verify';
+  @override
+  String get description => 'Verify a signed message';
+  @override
+  Map<String, CommandArg> get args => {
+        'message': CommandArg(
+            name: 'message', description: 'Original message', required: true),
+        'signature': CommandArg(
+            name: 'signature', description: 'Signature to verify', required: true),
+        'address': CommandArg(
+            name: 'address', description: 'Address that signed (optional)'),
+      };
+
+  @override
+  Future<CommandResult<Map<String, dynamic>>> execute(
+    CakeRuntimeContext ctx,
+    Map<String, dynamic> params,
+  ) async {
+    if (!ctx.hasWallet) {
+      return CommandResult.error('NO_WALLET', message: ctx.strings.noWalletOpen);
+    }
+    final message = params['message']?.toString() ?? '';
+    final signature = params['signature']?.toString() ?? '';
+    final address = params['address']?.toString();
+
+    try {
+      final valid = await ctx.wallet!.verifyMessage(message, signature,
+          address: address);
+      return CommandResult.ok(
+        {'valid': valid, 'message': message},
+        message: valid ? 'Signature valid' : 'Signature invalid',
+      );
+    } catch (e) {
+      return CommandResult.error('VERIFY_FAILED', message: e.toString());
+    }
+  }
+}

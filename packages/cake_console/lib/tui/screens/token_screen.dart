@@ -21,6 +21,9 @@ class TokenScreen extends TuiScreen {
   String get title => 'Tokens';
 
   @override
+  List<String> get supportedCommands => const ['tokens.list', 'tokens.add', 'tokens.remove'];
+
+  @override
   bool get capturesInput => _captureInput;
 
   @override

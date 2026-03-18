@@ -20,6 +20,9 @@ class ContactsScreen extends TuiScreen {
   String get title => 'Contacts';
 
   @override
+  List<String> get supportedCommands => const ['contacts.list', 'contacts.delete'];
+
+  @override
   Future<void> init() async => refresh();
 
   @override

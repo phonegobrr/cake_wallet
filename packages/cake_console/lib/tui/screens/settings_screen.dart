@@ -17,6 +17,9 @@ class SettingsScreen extends TuiScreen {
   String get title => 'Settings';
 
   @override
+  List<String> get supportedCommands => const ['settings.list', 'settings.get', 'settings.set'];
+
+  @override
   Future<void> init() async => refresh();
 
   @override

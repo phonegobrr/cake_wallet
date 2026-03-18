@@ -24,6 +24,9 @@ class SendScreen extends TuiScreen {
   String get title => 'Send';
 
   @override
+  List<String> get supportedCommands => const ['send', 'send.preview', 'send.commit', 'send.max'];
+
+  @override
   bool get capturesInput => true;
 
   @override

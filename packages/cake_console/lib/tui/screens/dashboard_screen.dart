@@ -22,6 +22,10 @@ class DashboardScreen extends TuiScreen {
   String get title => 'Dashboard';
 
   @override
+  List<String> get supportedCommands =>
+      const ['balance.get', 'sync.status', 'history.list'];
+
+  @override
   Future<void> init() async => refresh();
 
   @override

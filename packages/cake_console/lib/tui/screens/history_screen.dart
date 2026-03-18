@@ -19,6 +19,9 @@ class HistoryScreen extends TuiScreen {
   String get title => 'History';
 
   @override
+  List<String> get supportedCommands => const ['history.list', 'history.details'];
+
+  @override
   Future<void> init() async => refresh();
 
   @override

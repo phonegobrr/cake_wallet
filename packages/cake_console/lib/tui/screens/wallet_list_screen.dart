@@ -20,6 +20,9 @@ class WalletListScreen extends TuiScreen {
   String get title => 'Wallets';
 
   @override
+  List<String> get supportedCommands => const ['wallet.list', 'wallet.open', 'wallet.delete'];
+
+  @override
   Future<void> init() async => refresh();
 
   @override

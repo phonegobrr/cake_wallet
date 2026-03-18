@@ -20,6 +20,9 @@ class NodesScreen extends TuiScreen {
   String get title => 'Nodes';
 
   @override
+  List<String> get supportedCommands => const ['nodes.list', 'nodes.select', 'nodes.delete'];
+
+  @override
   Future<void> init() async => refresh();
 
   @override

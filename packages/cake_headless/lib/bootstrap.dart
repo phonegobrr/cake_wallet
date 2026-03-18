@@ -54,6 +54,8 @@ void _registerCommands(CommandBus bus) {
   bus.register(RestoreWalletKeysCommand());
   bus.register(SyncStartCommand());
   bus.register(SyncStopCommand());
+  bus.register(SignMessageCommand());
+  bus.register(VerifyMessageCommand());
 
   // Send / Receive
   bus.register(SendPreviewCommand());

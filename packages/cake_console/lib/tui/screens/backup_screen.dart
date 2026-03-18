@@ -20,6 +20,9 @@ class BackupScreen extends TuiScreen {
   String get title => 'Backup';
 
   @override
+  List<String> get supportedCommands => const ['backup.export', 'backup.import', 'backup.verify'];
+
+  @override
   bool get capturesInput => _captureInput;
 
   @override

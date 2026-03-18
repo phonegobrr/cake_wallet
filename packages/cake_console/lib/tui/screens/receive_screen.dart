@@ -17,6 +17,9 @@ class ReceiveScreen extends TuiScreen {
   String get title => 'Receive';
 
   @override
+  List<String> get supportedCommands => const ['receive.address', 'receive.uri', 'receive.list'];
+
+  @override
   Future<void> init() async => refresh();
 
   @override

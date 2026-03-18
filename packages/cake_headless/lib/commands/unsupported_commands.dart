@@ -136,15 +136,4 @@ List<UnsupportedCommand> createUnsupportedCommands() => [
         reason: 'Payjoin requires platform-specific mobile services',
       ),
 
-      // Message signing (wallet-type-specific)
-      UnsupportedCommand(
-        name: 'wallet.sign',
-        description: 'Sign a message with wallet key',
-        reason: 'Message signing requires wallet-type-specific cryptographic operations not yet available headless',
-      ),
-      UnsupportedCommand(
-        name: 'wallet.verify',
-        description: 'Verify a signed message',
-        reason: 'Message verification requires wallet-type-specific cryptographic operations not yet available headless',
-      ),
     ];
