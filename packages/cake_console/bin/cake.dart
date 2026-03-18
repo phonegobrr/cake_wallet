@@ -55,10 +55,11 @@ Future<void> main(List<String> args) async {
     assetLoader: ctx.assetLoader,
   );
 
-  // Skip exclusive lock for read-only commands like manifest, help
-  final readOnlyCommands = {'manifest', '--help', '-h'};
+  // Skip exclusive lock for read-only commands and help flags
+  final isHelpFlag = args.contains('--help') || args.contains('-h');
+  final readOnlyCommands = {'manifest'};
   final firstPositional = args.where((a) => !a.startsWith('-')).firstOrNull;
-  final skipLock = firstPositional != null && readOnlyCommands.contains(firstPositional);
+  final skipLock = isHelpFlag || (firstPositional != null && readOnlyCommands.contains(firstPositional));
   final bus = await bootstrap(ctx, skipLock: skipLock);
 
   // Wire WalletRuntime callbacks (cw_core-only: WalletInfo.getAll)

@@ -257,9 +257,13 @@ class McpServer {
     }
   }
 
+  static const _supportedVersions = ['2024-11-05', '2025-03-26', '2025-06-18'];
+
   Map<String, dynamic> _initializeResponse(dynamic id, {String? clientProtocolVersion}) {
-    // Negotiate protocol version — support client's requested version or latest
-    final protocolVersion = clientProtocolVersion ?? '2025-06-18';
+    // Negotiate: use client's version if supported, otherwise latest supported
+    final protocolVersion = (clientProtocolVersion != null && _supportedVersions.contains(clientProtocolVersion))
+        ? clientProtocolVersion
+        : _supportedVersions.last;
     return {
       'jsonrpc': '2.0',
       'result': {

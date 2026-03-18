@@ -53,9 +53,13 @@ class FileSecureStorage implements SecureStoragePort {
     final encrypted = _encrypt(data);
     final file = File(_filePath);
     await file.parent.create(recursive: true);
-    // Atomic write: write to temp file, then rename
+    // Atomic write: write to temp file, then replace original
     final tempFile = File('$_filePath.tmp');
     await tempFile.writeAsString(encrypted);
+    // File.rename fails on Windows when target exists; use copy+delete
+    if (await file.exists()) {
+      await file.delete();
+    }
     await tempFile.rename(_filePath);
     // Update cached modification time
     _lastModified = await File(_filePath).lastModified();
