@@ -10,6 +10,11 @@ class SettingsScreen extends TuiScreen {
   int _selectedIndex = 0;
   int _scrollOffset = 0;
   bool _isLoading = true;
+  String? _statusMessage;
+  bool _statusIsError = false;
+  bool _editing = false;
+  String _editValue = '';
+  String? _editKey;
 
   SettingsScreen(this._bus);
 
@@ -18,6 +23,9 @@ class SettingsScreen extends TuiScreen {
 
   @override
   List<String> get supportedCommands => const ['settings.list', 'settings.get', 'settings.set'];
+
+  @override
+  bool get capturesInput => _editing;
 
   @override
   Future<void> init() async => refresh();
@@ -51,7 +59,6 @@ class SettingsScreen extends TuiScreen {
 
     final entries = _settings.entries.toList();
 
-    // Clamp selection after list changes
     if (entries.isNotEmpty) {
       _selectedIndex = _selectedIndex.clamp(0, entries.length - 1);
     } else {
@@ -59,7 +66,7 @@ class SettingsScreen extends TuiScreen {
     }
 
     // Viewport
-    final availableHeight = (height - 6).clamp(1, entries.length);
+    final availableHeight = (height - 8).clamp(1, entries.length);
     _scrollOffset = _scrollOffset.clamp(0, (entries.length - 1).clamp(0, entries.length));
     if (_selectedIndex < _scrollOffset) {
       _scrollOffset = _selectedIndex;
@@ -80,17 +87,89 @@ class SettingsScreen extends TuiScreen {
       return style.render('$marker${e.value.key}: ${e.value.value}');
     }).toList();
 
-    return joinVertical(posLeft, [header, '', ...rows]);
+    final parts = <String>[header, '', ...rows];
+
+    if (_editing) {
+      parts.add('');
+      parts.add(Style().bold(true).foreground(cakeText)
+          .render('  Edit "$_editKey":'));
+      parts.add('  New value: $_editValue');
+      parts.add('');
+      parts.add(mutedStyle().render('  Enter: save  Esc: cancel'));
+    } else {
+      parts.add('');
+      parts.add(mutedStyle().render('  Enter: edit  Up/Down: navigate'));
+    }
+
+    if (_statusMessage != null) {
+      parts.add('');
+      final style = _statusIsError ? errorStyle() : successStyle();
+      parts.add(style.render('  $_statusMessage'));
+    }
+
+    return joinVertical(posLeft, parts);
   }
 
   @override
   void handleInput(TerminalEvent event) {
+    if (_editing) {
+      if (event.key == TerminalKey.escape) {
+        _editing = false;
+        _editValue = '';
+        _editKey = null;
+      } else if (event.key == TerminalKey.enter) {
+        _saveEdit();
+      } else if (event.key == TerminalKey.backspace && _editValue.isNotEmpty) {
+        _editValue = _editValue.substring(0, _editValue.length - 1);
+      } else if (event.key == TerminalKey.char && event.char != null) {
+        _editValue += event.char!;
+      }
+      return;
+    }
+
     if (_settings.isEmpty) return;
     final maxIndex = _settings.length - 1;
     if (event.key == TerminalKey.up) {
       _selectedIndex = (_selectedIndex - 1).clamp(0, maxIndex);
     } else if (event.key == TerminalKey.down) {
       _selectedIndex = (_selectedIndex + 1).clamp(0, maxIndex);
+    } else if (event.key == TerminalKey.enter) {
+      _startEdit();
     }
+  }
+
+  void _startEdit() {
+    if (_settings.isEmpty) return;
+    final entries = _settings.entries.toList();
+    final entry = entries[_selectedIndex];
+    _editKey = entry.key;
+    _editValue = entry.value;
+    _editing = true;
+    _statusMessage = null;
+  }
+
+  void _saveEdit() {
+    if (_editKey == null) return;
+    _editing = false;
+    _statusMessage = 'Saving...';
+    _statusIsError = false;
+    onStateChanged?.call();
+
+    _bus.dispatch('settings.set', {
+      'key': _editKey!,
+      'value': _editValue,
+    }).then((result) {
+      if (result.success) {
+        _statusMessage = 'Saved "$_editKey"';
+        _statusIsError = false;
+        _editKey = null;
+        _editValue = '';
+        refresh().then((_) => onStateChanged?.call());
+      } else {
+        _statusMessage = result.message ?? 'Failed to save';
+        _statusIsError = true;
+      }
+      onStateChanged?.call();
+    });
   }
 }

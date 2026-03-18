@@ -19,6 +19,7 @@ import 'package:cake_console/tui/screens/nodes_screen.dart';
 import 'package:cake_console/tui/screens/backup_screen.dart';
 import 'package:cake_console/tui/screens/coin_control_screen.dart';
 import 'package:cake_console/tui/screens/token_screen.dart';
+import 'package:cake_console/tui/screens/tor_screen.dart';
 import 'package:cake_console/tui/screens/command_palette_screen.dart';
 
 class TuiApp {
@@ -47,6 +48,7 @@ class TuiApp {
     'c': 7,  // Contacts
     'n': 8,  // Nodes
     'b': 9,  // Backup
+    't': 12, // Tor
   };
 
   TuiApp({
@@ -67,7 +69,8 @@ class TuiApp {
       BackupScreen(commandBus),       // 9
       CoinControlScreen(commandBus),  // 10
       TokenScreen(commandBus),        // 11
-      CommandPaletteScreen(commandBus), // 12
+      TorScreen(commandBus),          // 12
+      CommandPaletteScreen(commandBus), // 13 — always last (: hotkey uses screens.length - 1)
     ];
 
     // Wire render callbacks for async state changes
