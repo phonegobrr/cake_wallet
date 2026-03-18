@@ -41,7 +41,7 @@ packages/
       cli/                # CLI runner, host/watch/manifest commands
       mcp/                # MCP JSON-RPC server
       tui/                # Terminal UI screens and driver
-        screens/          # 13 screen implementations
+        screens/          # 14 screen implementations
 
   cake_wallet_headless/   # Bridge package (cw_core-only callbacks)
     lib/
@@ -50,7 +50,7 @@ packages/
 
 ## Core Constraint: cake_console Must Remain Flutter-Free
 
-`cake_console` must compile with `dart compile exe` without the Flutter SDK. The bridge package (`cake_wallet_headless`) wires callbacks using only `cw_core` types and Hive boxes.
+`cake_console` must compile with `dart build cli` (or `dart compile exe` on older SDKs) without the Flutter SDK. The bridge package (`cake_wallet_headless`) wires callbacks using only `cw_core` types and Hive boxes.
 
 ## Data Flow
 

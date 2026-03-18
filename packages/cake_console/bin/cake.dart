@@ -10,6 +10,7 @@ import 'package:cake_console/cli/watch_command.dart';
 import 'package:cake_console/cli/manifest_command.dart';
 import 'package:cw_core/cake_hive.dart';
 import 'package:cw_core/contact.dart';
+import 'package:cw_core/crypto_currency.dart';
 import 'package:cw_core/node.dart';
 import 'package:cw_core/utils/print_verbose.dart' show printVSink;
 
@@ -241,7 +242,15 @@ void _wireBridgeCallbacks(CakeRuntimeContext ctx, FileSecureStorage secureStorag
   // Wire addContact to Hive box
   ctx.addContact ??= (String name, String address, String? currency) async {
     final box = CakeHive.box<Contact>(Contact.boxName);
-    final contact = Contact(name: name, address: address);
+    CryptoCurrency? cryptoType;
+    if (currency != null && currency.isNotEmpty) {
+      try {
+        cryptoType = CryptoCurrency.fromString(currency);
+      } catch (_) {
+        // Unknown currency string — store without type
+      }
+    }
+    final contact = Contact(name: name, address: address, type: cryptoType);
     await box.add(contact);
     return AddressEntry(address: address, label: name, currencyTitle: currency ?? '');
   };
@@ -264,8 +273,15 @@ void _wireBridgeCallbacks(CakeRuntimeContext ctx, FileSecureStorage secureStorag
     }
     contact.name = newName;
     contact.address = address;
+    if (currency != null && currency.isNotEmpty) {
+      try {
+        contact.updateCryptoCurrency(currency: CryptoCurrency.fromString(currency));
+      } catch (_) {
+        // Unknown currency — leave existing type
+      }
+    }
     await contact.save();
-    return AddressEntry(address: address, label: newName, currencyTitle: currency ?? '');
+    return AddressEntry(address: address, label: newName, currencyTitle: currency ?? contact.type.title);
   };
 }
 

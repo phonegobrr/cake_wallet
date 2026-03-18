@@ -61,5 +61,5 @@ jobs:
         working-directory: packages/cake_console
 
       - name: Verify binary compiles
-        run: dart compile exe bin/cake.dart -o cake
+        run: dart build cli
         working-directory: packages/cake_console

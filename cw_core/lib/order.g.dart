@@ -25,12 +25,12 @@ class OrderAdapter extends TypeAdapter<Order> {
       amount: fields[6] as String? ?? '',
       receiveAddress: fields[7] as String? ?? '',
       walletId: fields[8] as String? ?? '',
-      receiveAmount: fields[10] as String?,
-      quantity: fields[12] as String?,
+      receiveAmount: fields[10] as String? ?? '',
+      quantity: fields[12] as String? ?? '',
     )
       ..stateRaw = fields[4] as String? ?? ''
       ..providerRaw = fields[9] as int? ?? 0
-      ..sourceRaw = fields[11] as int?;
+      ..sourceRaw = fields[11] as int? ?? 0;
   }
 
   @override

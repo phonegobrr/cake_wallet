@@ -20,6 +20,7 @@ import 'package:cw_core/utils/tor/disabled.dart';
 import 'package:cw_core/wallet_info.dart' show performHiveMigration;
 import 'package:cake_headless/ports/asset_loader_port.dart';
 import 'package:get_it/get_it.dart';
+import 'package:hive/hive.dart';
 
 /// Headless initialization using cw_core types (no Flutter).
 ///
@@ -48,20 +49,29 @@ Future<void> initializeHeadlessCore({
   // Run Hive→SQLite migration for legacy WalletInfo entries
   await performHiveMigration();
 
+  // Retrieve or generate the shared encryption key for encrypted boxes.
+  // The Flutter app stores this under 'transactionDescriptionsBoxKey' in SecureStorage
+  // and reuses the same key for Trade, Order, TransactionDescription, HavenSeedStore.
+  final encryptionKey = await _getOrCreateEncryptionKey(secureStorage);
+
   // Open cw_core Hive boxes
   await CakeHive.openBox<Node>(Node.boxName);
   await CakeHive.openBox<Node>('${Node.boxName}pow');
   await CakeHive.openBox<UnspentCoinsInfo>(UnspentCoinsInfo.boxName);
   await CakeHive.openBox<PayjoinSession>(PayjoinSession.boxName);
-  // Extracted model boxes (Section 3.2)
+  // Extracted model boxes — unencrypted
   await CakeHive.openBox<Contact>(Contact.boxName);
-  await CakeHive.openBox<Trade>(Trade.boxName);
   await CakeHive.openBox<Template>(Template.boxName);
   await CakeHive.openBox<ExchangeTemplate>(ExchangeTemplate.boxName);
-  await CakeHive.openBox<Order>(Order.boxName);
-  await CakeHive.openBox<TransactionDescription>(TransactionDescription.boxName);
   await CakeHive.openBox<AnonpayInvoiceInfo>(AnonpayInvoiceInfo.boxName);
-  await CakeHive.openBox<HavenSeedStore>(HavenSeedStore.boxName);
+  // Extracted model boxes — encrypted (must match Flutter app's encryption)
+  final cipher = HiveAesCipher(encryptionKey);
+  await CakeHive.openBox<Trade>(Trade.boxName, encryptionCipher: cipher);
+  await CakeHive.openBox<Order>(Order.boxName, encryptionCipher: cipher);
+  await CakeHive.openBox<TransactionDescription>(
+      TransactionDescription.boxName, encryptionCipher: cipher);
+  await CakeHive.openBox<HavenSeedStore>(HavenSeedStore.boxName,
+      encryptionCipher: cipher);
 
   // Register SecureStorage in GetIt
   final di = GetIt.instance;
@@ -73,4 +83,18 @@ Future<void> initializeHeadlessCore({
   if (assetLoader != null) {
     setAssetLoader((path) => assetLoader.loadString(path));
   }
+}
+
+/// Retrieve the shared Hive encryption key from SecureStorage, or generate
+/// and persist a new one. Compatible with the Flutter app's key storage
+/// format (comma-separated int list under 'transactionDescriptionsBoxKey').
+Future<List<int>> _getOrCreateEncryptionKey(SecureStorage secureStorage) async {
+  const storageKey = 'transactionDescriptionsBoxKey';
+  final existing = await secureStorage.read(key: storageKey);
+  if (existing != null && existing.isNotEmpty) {
+    return existing.split(',').map((i) => int.parse(i)).toList();
+  }
+  final key = CakeHive.generateSecureKey();
+  await secureStorage.write(key: storageKey, value: key.join(','));
+  return key;
 }
