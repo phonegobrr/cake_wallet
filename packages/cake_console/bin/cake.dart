@@ -7,6 +7,7 @@ import 'package:cake_headless/cake_headless.dart';
 import 'package:cake_console/cli/cli_runner.dart';
 import 'package:cake_console/cli/host_command.dart';
 import 'package:cake_console/cli/watch_command.dart';
+import 'package:cake_console/cli/manifest_command.dart';
 import 'package:cw_core/utils/print_verbose.dart' show printVSink;
 
 Future<void> main(List<String> args) async {
@@ -65,7 +66,8 @@ Future<void> main(List<String> args) async {
     ..addCommand(TuiCommand(bus, ctx.eventBus))
     ..addCommand(McpCommand(bus, ctx.eventBus))
     ..addCommand(HostCommand(bus, ctx.eventBus))
-    ..addCommand(WatchCommand(ctx.eventBus));
+    ..addCommand(WatchCommand(ctx.eventBus))
+    ..addCommand(ManifestCommand(bus));
 
   // Generate CLI subcommands from dotted command names
   _registerCliSubcommands(runner, bus, args);
