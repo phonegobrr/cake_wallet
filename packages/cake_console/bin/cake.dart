@@ -76,7 +76,10 @@ Future<void> main(List<String> args) async {
   // These provide direct data access without Flutter DI.
   _wireBridgeCallbacks(ctx, secureStorage);
 
-  // Auto-load the last used wallet if loadWallet is wired (Section 4.6)
+  // Auto-load the last used wallet if loadWallet is wired (Section 4.6).
+  // In pure-Dart mode, loadWallet is null (requires Flutter app's KeyService +
+  // wallet-type-specific WalletService). This becomes active when the bridge
+  // package wires ctx.loadWallet before this point.
   await runtime.autoLoadCurrentWallet();
 
   // Build CLI runner
@@ -193,10 +196,22 @@ void _wireBridgeCallbacks(CakeRuntimeContext ctx, FileSecureStorage secureStorag
     }
   };
 
-  // Wire connectAndSync
+  // Wire connectAndSync — connect to the first matching node, then start sync
   ctx.connectAndSync ??= () async {
     final wallet = ctx.wallet;
     if (wallet == null) return;
+    // Find a node matching the wallet type and connect before syncing
+    try {
+      final box = CakeHive.box<Node>(Node.boxName);
+      final matchingNode = box.values
+          .where((n) => n.type == wallet.type)
+          .firstOrNull;
+      if (matchingNode != null) {
+        await wallet.connectToNode(node: matchingNode);
+      }
+    } catch (e) {
+      ctx.logger.warn('Node connection failed: $e');
+    }
     await wallet.startSync();
   };
 
