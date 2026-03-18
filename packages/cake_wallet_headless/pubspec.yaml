@@ -1,0 +1,14 @@
+name: cake_wallet_headless
+description: Bridge exposing Cake Wallet DI to headless contexts
+publish_to: none
+
+environment:
+  sdk: '>=3.0.6 <4.0.0'
+
+dependencies:
+  cake_headless:
+    path: ../cake_headless
+  cw_core:
+    path: ../../cw_core
+  get_it: ^7.7.0
+  hive: ^2.2.3
