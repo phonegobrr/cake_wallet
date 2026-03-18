@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:cake_headless/commands/command.dart';
 import 'package:cake_headless/commands/command_bus.dart';
 import 'package:cake_headless/events/event_bus.dart';
+import 'package:cake_headless/events/wallet_event.dart';
 import 'package:cake_console/cli/json_output.dart' show serializeData;
 
 class McpServer {
@@ -25,14 +26,23 @@ class McpServer {
       stdout.writeln(line);
     });
 
-    // Subscribe to wallet events and emit MCP notifications
+    // Subscribe to wallet events and emit MCP notifications + resource updates
     final eventSub = _eventBus.events.listen((event) {
-      final notification = {
+      // Custom wallet event notification
+      _writeLine(jsonEncode({
         'jsonrpc': '2.0',
         'method': 'notifications/cakewallet/wallet_event',
         'params': event.toJson(),
-      };
-      _writeLine(jsonEncode(notification));
+      }));
+      // Standards-compliant resource update notifications (10.13)
+      final resourceUris = _eventTypeToResourceUris(event.type);
+      for (final uri in resourceUris) {
+        _writeLine(jsonEncode({
+          'jsonrpc': '2.0',
+          'method': 'notifications/resources/updated',
+          'params': {'uri': uri},
+        }));
+      }
     });
 
     // Redirect all print() calls to stderr to keep stdout protocol-clean
@@ -41,11 +51,13 @@ class McpServer {
           stdin.transform(utf8.decoder).transform(const LineSplitter());
 
       await for (final line in lines) {
-        // Skip empty lines (10.4)
-        if (line.trim().isEmpty) continue;
+        // Skip empty lines (10.4) and Content-Length headers (10.12)
+        final trimmed = line.trim();
+        if (trimmed.isEmpty) continue;
+        if (trimmed.startsWith('Content-Length:')) continue;
 
         try {
-          final request = jsonDecode(line) as Map<String, dynamic>;
+          final request = jsonDecode(trimmed) as Map<String, dynamic>;
           final response = await _handleRequest(request);
           // Notifications (no id) must not receive a response
           if (response != null) {
@@ -89,7 +101,8 @@ class McpServer {
     }
 
     if (method == 'initialize') {
-      return _initializeResponse(id);
+      final clientVersion = params['protocolVersion'] as String?;
+      return _initializeResponse(id, clientProtocolVersion: clientVersion);
     }
 
     if (method == 'ping') {
@@ -103,9 +116,23 @@ class McpServer {
     if (method == 'resources/list') {
       return {
         'jsonrpc': '2.0',
-        'result': {'resources': []},
+        'result': {
+          'resources': [
+            {'uri': 'cake://wallet/current', 'name': 'Current Wallet', 'mimeType': 'application/json'},
+            {'uri': 'cake://wallet/current/balance', 'name': 'Wallet Balance', 'mimeType': 'application/json'},
+            {'uri': 'cake://wallet/current/sync', 'name': 'Sync Status', 'mimeType': 'application/json'},
+          ],
+        },
         'id': id,
       };
+    }
+
+    if (method == 'resources/read') {
+      return _handleResourceRead(id, params);
+    }
+
+    if (method == 'resources/subscribe' || method == 'resources/unsubscribe') {
+      return {'jsonrpc': '2.0', 'result': {}, 'id': id};
     }
 
     // Stub handlers for compliant MCP clients (10.5)
@@ -230,22 +257,89 @@ class McpServer {
     }
   }
 
-  Map<String, dynamic> _initializeResponse(dynamic id) => {
-        'jsonrpc': '2.0',
-        'result': {
-          'protocolVersion': '2024-11-05',
-          'capabilities': {
-            'tools': {'listChanged': false},
-            'resources': {},
-            'prompts': {},
-          },
-          'serverInfo': {
-            'name': 'cake-wallet-mcp',
-            'version': '0.1.0',
-          },
+  Map<String, dynamic> _initializeResponse(dynamic id, {String? clientProtocolVersion}) {
+    // Negotiate protocol version — support client's requested version or latest
+    final protocolVersion = clientProtocolVersion ?? '2025-06-18';
+    return {
+      'jsonrpc': '2.0',
+      'result': {
+        'protocolVersion': protocolVersion,
+        'capabilities': {
+          'tools': {'listChanged': false},
+          'resources': {'subscribe': true, 'listChanged': false},
+          'prompts': {},
+          'logging': {},
         },
+        'serverInfo': {
+          'name': 'cake-wallet-mcp',
+          'version': '0.1.0',
+        },
+      },
+      'id': id,
+    };
+  }
+
+  Future<Map<String, dynamic>> _handleResourceRead(dynamic id, Map<String, dynamic> params) async {
+    final uri = params['uri'] as String?;
+    if (uri == null) {
+      return {
+        'jsonrpc': '2.0',
+        'error': {'code': -32602, 'message': 'Missing resource URI'},
         'id': id,
       };
+    }
+
+    Map<String, dynamic>? content;
+    switch (uri) {
+      case 'cake://wallet/current':
+        final result = await _bus.dispatch('wallet.list', {});
+        content = result.toJson(serializeData);
+        break;
+      case 'cake://wallet/current/balance':
+        final result = await _bus.dispatch('balance.get', {});
+        content = result.toJson(serializeData);
+        break;
+      case 'cake://wallet/current/sync':
+        final result = await _bus.dispatch('sync.status', {});
+        content = result.toJson(serializeData);
+        break;
+      default:
+        return {
+          'jsonrpc': '2.0',
+          'error': {'code': -32602, 'message': 'Unknown resource: $uri'},
+          'id': id,
+        };
+    }
+
+    return {
+      'jsonrpc': '2.0',
+      'result': {
+        'contents': [
+          {
+            'uri': uri,
+            'mimeType': 'application/json',
+            'text': jsonEncode(content),
+          },
+        ],
+      },
+      'id': id,
+    };
+  }
+
+  /// Map event types to affected resource URIs for resource update notifications.
+  List<String> _eventTypeToResourceUris(WalletEventType type) {
+    switch (type) {
+      case WalletEventType.balanceChanged:
+        return ['cake://wallet/current/balance'];
+      case WalletEventType.syncStatusChanged:
+        return ['cake://wallet/current/sync'];
+      case WalletEventType.walletOpened:
+      case WalletEventType.walletClosed:
+        return ['cake://wallet/current', 'cake://wallet/current/balance', 'cake://wallet/current/sync'];
+      default:
+        return [];
+    }
+  }
 
   Map<String, dynamic> _listToolsResponse(dynamic id) => {
         'jsonrpc': '2.0',
