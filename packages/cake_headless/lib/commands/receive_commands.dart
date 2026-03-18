@@ -224,9 +224,7 @@ class GetReceiveUriCommand extends WalletCommand<Map<String, String>> {
     // Try the wallet-specific URI builder first, fallback to generic scheme
     String uri;
     try {
-      final paymentUri = wallet.walletAddresses.getPaymentUri(
-        amount: amount ?? '',
-      );
+      final paymentUri = wallet.walletAddresses.getPaymentUri(amount ?? '');
       uri = paymentUri.toString();
     } catch (_) {
       // Fallback for wallets without a getPaymentUri method

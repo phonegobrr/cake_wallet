@@ -49,11 +49,13 @@ void wireHeadlessCallbacks(CakeRuntimeContext ctx) {
 
   // Wire deleteNode from Hive box — match by URI AND wallet type to avoid cross-type deletion
   ctx.deleteNode ??= (String uri) async {
-    final box = CakeHive.box<Node>(Node.boxName);
     final wallet = ctx.wallet;
+    if (wallet == null) {
+      throw StateError('Cannot delete node: no wallet is open to scope deletion by type');
+    }
+    final box = CakeHive.box<Node>(Node.boxName);
     final node = box.values.where((n) =>
-        n.uriRaw == uri &&
-        (wallet == null || n.type == wallet.type)).firstOrNull;
+        n.uriRaw == uri && n.type == wallet.type).firstOrNull;
     if (node != null) {
       await node.delete();
     }
