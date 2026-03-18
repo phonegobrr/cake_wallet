@@ -30,11 +30,7 @@ class McpServer {
       final notification = {
         'jsonrpc': '2.0',
         'method': 'notifications/cakewallet/wallet_event',
-        'params': {
-          'type': event.type.name,
-          'data': event.data,
-          'timestamp': event.timestamp.toIso8601String(),
-        },
+        'params': event.toJson(),
       };
       _writeLine(jsonEncode(notification));
     });

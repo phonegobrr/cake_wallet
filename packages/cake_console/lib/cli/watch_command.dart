@@ -19,11 +19,7 @@ class WatchCommand extends Command<void> {
   @override
   Future<void> run() async {
     await for (final event in _eventBus.events) {
-      stdout.writeln(jsonEncode({
-        'type': event.type.name,
-        'data': event.data,
-        'timestamp': event.timestamp.toIso8601String(),
-      }));
+      stdout.writeln(jsonEncode(event.toJson()));
     }
   }
 }

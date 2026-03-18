@@ -55,6 +55,8 @@ class HeadlessCliCommand extends Command<void> {
   final String headlessCommand;
   final CommandBus _bus;
   final bool Function() _isJsonMode;
+  final bool Function() _isWatchMode;
+  final WalletEventBus? _eventBus;
 
   HeadlessCliCommand({
     required this.name,
@@ -62,8 +64,12 @@ class HeadlessCliCommand extends Command<void> {
     required this.headlessCommand,
     required CommandBus bus,
     required bool Function() isJsonMode,
+    bool Function()? isWatchMode,
+    WalletEventBus? eventBus,
   })  : _bus = bus,
-        _isJsonMode = isJsonMode {
+        _isJsonMode = isJsonMode,
+        _isWatchMode = isWatchMode ?? (() => false),
+        _eventBus = eventBus {
     // Register CLI options from the headless command's arg definitions
     final cmd = bus.getCommand(headlessCommand);
     if (cmd != null) {
@@ -120,6 +126,23 @@ class HeadlessCliCommand extends Command<void> {
 
     if (!result.success) {
       exitCode = 1;
+      return;
+    }
+
+    // --watch mode: re-execute on each wallet event (read-only commands only)
+    final cmd = _bus.getCommand(headlessCommand);
+    if (_isWatchMode() && _eventBus != null &&
+        cmd != null && cmd.isSafeForNonInteractive) {
+      await for (final _ in _eventBus!.events) {
+        final updated = await _bus.dispatch(headlessCommand, params);
+        if (_isJsonMode()) {
+          outputJson(updated);
+        } else {
+          // Clear line and re-output for terminal
+          if (stdout.hasTerminal) stderr.write('\x1B[2K\r');
+          outputText(updated);
+        }
+      }
     }
   }
 }

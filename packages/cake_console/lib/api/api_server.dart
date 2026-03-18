@@ -117,11 +117,7 @@ class ApiServer {
     // Server-Sent Events stream
     final controller = StreamController<List<int>>();
     final sub = eventBus.events.listen((event) {
-      final json = jsonEncode({
-        'type': event.type.name,
-        'data': event.data,
-        'timestamp': event.timestamp.toIso8601String(),
-      });
+      final json = jsonEncode(event.toJson());
       controller.add(utf8.encode('data: $json\n\n'));
     });
 

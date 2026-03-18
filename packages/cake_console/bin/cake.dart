@@ -70,7 +70,7 @@ Future<void> main(List<String> args) async {
     ..addCommand(ManifestCommand(bus));
 
   // Generate CLI subcommands from dotted command names
-  _registerCliSubcommands(runner, bus, args);
+  _registerCliSubcommands(runner, bus, args, ctx.eventBus);
 
   // Global flags
   runner.argParser
@@ -78,7 +78,8 @@ Future<void> main(List<String> args) async {
     ..addOption('wallet', abbr: 'w', help: 'Wallet name')
     ..addFlag('json', help: 'Output as JSON', negatable: false)
     ..addFlag('no-color', help: 'Disable colors', negatable: false)
-    ..addFlag('yes', abbr: 'y', help: 'Auto-confirm prompts', negatable: false);
+    ..addFlag('yes', abbr: 'y', help: 'Auto-confirm prompts', negatable: false)
+    ..addFlag('watch', help: 'Re-execute on wallet events (read-only commands)', negatable: false);
 
   // If no subcommand given, launch interactive TUI or show help
   if (args.isEmpty) {
@@ -145,7 +146,9 @@ Future<Uint8List> _getOrCreateEncryptionKey(String keyPath) async {
 /// e.g. "wallet.list" becomes `cake wallet list`,
 ///      "balance.get" becomes `cake balance`.
 void _registerCliSubcommands(
-    CommandRunner runner, CommandBus bus, List<String> args) {
+    CommandRunner runner, CommandBus bus, List<String> args,
+    WalletEventBus eventBus) {
+  final isWatch = () => args.contains('--watch');
   // Group commands by top-level prefix
   final groups = <String, List<WalletCommand>>{};
   for (final cmd in bus.commands) {
@@ -166,6 +169,8 @@ void _registerCliSubcommands(
         headlessCommand: commands.first.name,
         bus: bus,
         isJsonMode: () => _isJson(args),
+        isWatchMode: isWatch,
+        eventBus: eventBus,
       ));
     } else if (commands.length == 1) {
       // Single dotted command — register group name pointing to the subcommand
@@ -176,6 +181,8 @@ void _registerCliSubcommands(
           headlessCommand: commands.first.name,
           bus: bus,
           isJsonMode: () => _isJson(args),
+          isWatchMode: isWatch,
+          eventBus: eventBus,
         ));
       } on ArgumentError catch (_) {
         // Already registered — expected for shared prefix groups
