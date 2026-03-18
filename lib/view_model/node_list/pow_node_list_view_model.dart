@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cake_wallet/generated/i18n.dart';
 import 'package:cake_wallet/store/app_store.dart';
 import 'package:cake_wallet/utils/mobx.dart';
@@ -52,6 +54,7 @@ abstract class PowNodeListViewModelBase with Store {
   final SettingsStore settingsStore;
   final Box<Node> _nodeSource;
   final AppStore _appStore;
+  StreamSubscription<BoxEvent>? _nodesSubscription;
 
   Future<void> reset() async {
     await resetPowToDefault(_nodeSource);
@@ -77,8 +80,10 @@ abstract class PowNodeListViewModelBase with Store {
 
   @action
   void _bindNodes() {
+    // Cancel existing subscription to prevent duplicate listeners
+    _nodesSubscription?.cancel();
     nodes.clear();
-    _nodeSource.bindToList(
+    _nodesSubscription = _nodeSource.bindToList(
       nodes,
       filter: (val) => val.type == _appStore.wallet!.type,
       initialFire: true,

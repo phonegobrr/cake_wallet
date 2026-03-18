@@ -33,6 +33,10 @@ abstract class ContactListViewModelBase with Store {
   }
 
   Future<void> _init() async {
+    // Clear previous state to prevent duplicates on repeated calls
+    walletContacts.clear();
+    _subscription?.cancel();
+
     final walletInfos = await WalletInfo.getAll();
     for (final info in walletInfos) {
       final addressInfos = await info.getAddressInfos();

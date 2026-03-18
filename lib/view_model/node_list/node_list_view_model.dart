@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cake_wallet/generated/i18n.dart';
 import 'package:cake_wallet/store/app_store.dart';
 import 'package:cake_wallet/utils/mobx.dart';
@@ -75,6 +77,7 @@ abstract class NodeListViewModelBase with Store {
   final SettingsStore settingsStore;
   final Box<Node> _nodeSource;
   final AppStore _appStore;
+  StreamSubscription<BoxEvent>? _nodesSubscription;
 
   Future<void> reset() async {
     await resetToDefault(_nodeSource);
@@ -131,6 +134,8 @@ abstract class NodeListViewModelBase with Store {
 
   @action
   void _bindNodes() {
+    // Cancel existing subscription to prevent duplicate listeners
+    _nodesSubscription?.cancel();
     nodes.clear();
     final wallet = _appStore.wallet!;
     final walletType = wallet.type;
@@ -141,7 +146,7 @@ abstract class NodeListViewModelBase with Store {
       if (chainId != null) {
         final nodeWalletType = evm!.getWalletTypeByChainId(chainId);
         if (nodeWalletType != null) {
-          _nodeSource.bindToList(
+          _nodesSubscription = _nodeSource.bindToList(
             nodes,
             filter: (val) => val.type == nodeWalletType,
             initialFire: true,
@@ -154,7 +159,7 @@ abstract class NodeListViewModelBase with Store {
     }
 
     // For non-EVM wallets, use the wallet type directly
-    _nodeSource.bindToList(
+    _nodesSubscription = _nodeSource.bindToList(
       nodes,
       filter: (val) => val.type == walletType,
       initialFire: true,
