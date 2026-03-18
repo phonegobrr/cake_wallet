@@ -31,6 +31,11 @@ class ReceiveScreen extends TuiScreen {
 
   @override
   Future<void> refresh() async {
+    // Clear stale list data on refresh (e.g. after wallet switch)
+    _showList = false;
+    _addressList = [];
+    _listSelectedIndex = 0;
+    _uriDisplay = null;
     try {
       final result = await _bus.dispatch('receive.address', {});
       if (result.success) _address = result.data as AddressEntry?;
@@ -55,10 +60,14 @@ class ReceiveScreen extends TuiScreen {
     final parts = <String>[header, ''];
 
     if (_showList && _addressList.isNotEmpty) {
-      // Show address list view
+      // Show address list view with scroll support
       parts.add(Style().bold(true).foreground(cakeText).render('  Addresses:'));
       final visibleCount = (height - 10).clamp(1, _addressList.length);
-      for (int i = 0; i < visibleCount && i < _addressList.length; i++) {
+      int scrollStart = 0;
+      if (_listSelectedIndex >= visibleCount) {
+        scrollStart = _listSelectedIndex - visibleCount + 1;
+      }
+      for (int i = scrollStart; i < scrollStart + visibleCount && i < _addressList.length; i++) {
         final a = _addressList[i];
         final isSelected = i == _listSelectedIndex;
         final style = isSelected
@@ -90,7 +99,7 @@ class ReceiveScreen extends TuiScreen {
 
       parts.add('');
       parts.add(mutedStyle().render(
-          '  n: new subaddress  r: rotate  l: list addresses  u: show URI'));
+          '  N: new subaddress  R: rotate  L: list addresses  U: show URI'));
     }
 
     if (_statusMessage != null) {
@@ -118,18 +127,20 @@ class ReceiveScreen extends TuiScreen {
       return;
     }
 
+    // Use uppercase letters to avoid conflict with global hotkeys
+    // (lowercase n/r/etc. are consumed by the TuiApp hotkey map)
     if (event.key == TerminalKey.char) {
       switch (event.char) {
-        case 'n':
+        case 'N':
           _newSubaddress();
           break;
-        case 'r':
+        case 'R':
           _rotateAddress();
           break;
-        case 'l':
+        case 'L':
           _listAddresses();
           break;
-        case 'u':
+        case 'U':
           _showUri();
           break;
       }

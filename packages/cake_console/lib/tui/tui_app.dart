@@ -144,8 +144,10 @@ class TuiApp {
           continue;
         }
 
-        // ':' always opens command palette regardless of capture mode
+        // ':' opens command palette — but NOT when the active screen captures input
+        // (so settings editing, send form, etc. can type ':' in values)
         if (event.key == TerminalKey.char && event.char == ':' &&
+            !screens[_activeTab].capturesInput &&
             _activeTab != screens.length - 1) {
           await _switchTab(screens.length - 1); // Command palette is last
           _render();
