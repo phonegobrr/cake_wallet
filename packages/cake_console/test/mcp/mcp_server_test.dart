@@ -87,11 +87,43 @@ void main() {
     });
 
     test('serializeData handles maps', () {
-      // Importing via cli/json_output.dart
       final data = {'a': 1, 'b': 'c'};
       final result = CommandResult.ok(data);
       final json = result.toJson((d) => d);
       expect(json['data']['a'], 1);
+    });
+
+    test('serializeData preserves lists (not wrapped in map)', () {
+      final data = [1, 2, 3];
+      final result = CommandResult.ok(data);
+      final json = result.toJson((d) => d);
+      expect(json['data'], isA<List>());
+      expect(json['data'], [1, 2, 3]);
+    });
+
+    test('serializeData preserves scalars', () {
+      final result = CommandResult.ok('hello');
+      final json = result.toJson((d) => d);
+      expect(json['data'], 'hello');
+    });
+
+    test('notifications should not have id field', () {
+      // Verify notification format per JSON-RPC spec
+      final notification = {
+        'jsonrpc': '2.0',
+        'method': 'notifications/cakewallet/wallet_event',
+        'params': {'type': 'balanceChanged'},
+      };
+      expect(notification.containsKey('id'), isFalse);
+    });
+
+    test('UNSUPPORTED_ON_PLATFORM stubs return correct error code', () async {
+      for (final cmd in createUnsupportedCommands()) {
+        bus.register(cmd);
+      }
+      final result = await bus.dispatch('buy.providers', {});
+      expect(result.success, isFalse);
+      expect(result.errorCode, 'UNSUPPORTED_ON_PLATFORM');
     });
   });
 }

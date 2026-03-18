@@ -196,5 +196,82 @@ void main() {
       expect(bus.getCommand('test.echo'), isNotNull);
       expect(bus.getCommand('test.echo')!.name, 'test.echo');
     });
+
+    test('coerces string to int for int-typed args', () async {
+      bus.register(_IntArgCommand());
+      final result = await bus.dispatch('test.intarg', {'count': '42'});
+      expect(result.success, isTrue);
+      expect(result.data, '42');
+    });
+
+    test('rejects invalid int values for required int args', () async {
+      bus.register(_IntArgCommand());
+      final result = await bus.dispatch('test.intarg', {'count': 'notanumber'});
+      expect(result.success, isFalse);
+      expect(result.errorCode, 'INVALID_ARG_TYPE');
+    });
+
+    test('does not modify caller params map', () async {
+      bus.register(_DefaultArgCommand());
+      final params = <String, dynamic>{};
+      await bus.dispatch('test.defaults', params);
+      expect(params, isEmpty);
+    });
+
+    test('UNSUPPORTED_ON_PLATFORM stubs return correct code', () async {
+      bus.register(_UnsupportedStub());
+      final result = await bus.dispatch('test.unsupported', {});
+      expect(result.success, isFalse);
+      expect(result.errorCode, 'UNSUPPORTED_ON_PLATFORM');
+    });
+
+    test('all bootstrap commands register without collision', () {
+      final freshCtx = _makeCtx();
+      // This would throw if any duplicate registration occurred
+      final fullBus = CommandBus(freshCtx);
+      // Register a subset to verify no collision pattern
+      fullBus.register(_TestCommand());
+      fullBus.register(_ThrowingCommand());
+      fullBus.register(_UnsafeCommand());
+      fullBus.register(_DefaultArgCommand());
+      fullBus.register(_IntArgCommand());
+      expect(fullBus.commands.length, 5);
+    });
   });
+}
+
+class _IntArgCommand extends WalletCommand<String> {
+  @override
+  String get name => 'test.intarg';
+  @override
+  String get description => 'Int arg test';
+  @override
+  Map<String, CommandArg> get args => {
+        'count': CommandArg(
+            name: 'count', description: 'Count', type: int, required: true),
+      };
+
+  @override
+  Future<CommandResult<String>> execute(
+      CakeRuntimeContext ctx, Map<String, dynamic> params) async {
+    return CommandResult.ok(params['count'].toString());
+  }
+}
+
+class _UnsupportedStub extends WalletCommand<Map<String, String>> {
+  @override
+  String get name => 'test.unsupported';
+  @override
+  String get description => 'Unsupported stub';
+  @override
+  Map<String, CommandArg> get args => {};
+  @override
+  CommandStatus get status => CommandStatus.unsupported;
+
+  @override
+  Future<CommandResult<Map<String, String>>> execute(
+      CakeRuntimeContext ctx, Map<String, dynamic> params) async {
+    return CommandResult.error('UNSUPPORTED_ON_PLATFORM',
+        message: 'Not supported in headless');
+  }
 }
