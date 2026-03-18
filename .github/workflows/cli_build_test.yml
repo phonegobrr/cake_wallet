@@ -22,8 +22,19 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dart-lang/setup-dart@v1
 
-      - name: Prepare torch_dart (cw_core transitive dependency)
-        run: bash scripts/prepare_torch.sh
+      - name: Set up pure-Dart overrides for headless builds
+        shell: bash
+        run: |
+          # Use torch_dart_stub and cake_backup_stub for pure-Dart compilation
+          # These override Flutter-dependent packages with no-op stubs
+          cat > packages/cake_headless/pubspec_overrides.yaml <<'YAML'
+          dependency_overrides:
+            torch_dart:
+              path: ../torch_dart_stub
+            cake_backup:
+              path: ../cake_backup_stub
+          YAML
+          cp packages/cake_headless/pubspec_overrides.yaml packages/cake_console/pubspec_overrides.yaml
 
       - name: Get headless dependencies
         run: dart pub get
@@ -50,5 +61,5 @@ jobs:
         working-directory: packages/cake_console
 
       - name: Verify binary compiles
-        run: dart build cli
+        run: dart compile exe bin/cake.dart -o cake
         working-directory: packages/cake_console
