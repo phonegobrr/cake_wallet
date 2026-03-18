@@ -111,13 +111,11 @@ class SendAllCommand extends WalletCommand<SendResult> {
 
     final priority = params['priority']?.toString();
 
-    // Send-all/sweep requires wallet-type-specific credential building
-    // with a sendAll flag so fees are deducted from the output.
-    // The 'ALL' sentinel signals the runtime callback to use sweep mode.
+    // Send-all/sweep uses the sendAll flag so fees are deducted from the output.
     if (ctx.sendTransaction != null) {
       try {
-        final result = await ctx.sendTransaction!(address, 'ALL',
-            priority: priority);
+        final result = await ctx.sendTransaction!(address, '0',
+            priority: priority, sendAll: true);
         return CommandResult.ok(result,
             message: 'Sweep transaction sent: ${result.txHash}');
       } catch (e) {

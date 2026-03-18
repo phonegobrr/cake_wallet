@@ -43,8 +43,9 @@ class CakeRuntimeContext {
   Future<void> Function(String name, int walletTypeRaw)? loadWallet;
 
   /// Callback to send a transaction. Wired by the entry point.
+  /// When [sendAll] is true, sends entire balance minus fees.
   Future<SendResult> Function(String address, String amount,
-      {String? priority})? sendTransaction;
+      {String? priority, bool sendAll})? sendTransaction;
 
   /// Callback to list configured nodes as DTOs.
   Future<List<NodeInfo>> Function()? listNodes;

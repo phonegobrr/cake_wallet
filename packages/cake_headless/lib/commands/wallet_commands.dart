@@ -74,11 +74,23 @@ class GetBalanceCommand extends WalletCommand<BalanceSnapshot> {
         return BigInt.zero;
       }
     })();
+    // Try to get formatted amounts using the wallet's currency formatter
+    String? formatAmount(dynamic raw) {
+      try {
+        return wallet.currency.formatAmount(raw.toString());
+      } catch (_) {
+        return null;
+      }
+    }
+
     return CommandResult.ok(BalanceSnapshot(
       available: primaryBalance.available.toString(),
       pending: primaryBalance.additional.toString(),
       frozen: frozen.toString(),
       currencyTitle: wallet.currency.title,
+      availableFormatted: formatAmount(primaryBalance.available),
+      pendingFormatted: formatAmount(primaryBalance.additional),
+      frozenFormatted: formatAmount(frozen),
     ));
   }
 }

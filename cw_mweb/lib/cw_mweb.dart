@@ -56,7 +56,7 @@ class CwMweb {
     // Use root_dir override if set (headless), otherwise path_provider (Flutter)
     final Directory appDir;
     try {
-      appDir = Directory(await getAppDir());
+      appDir = await getAppDir();
     } catch (_) {
       appDir = await getApplicationSupportDirectory();
     }
