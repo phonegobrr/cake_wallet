@@ -17,6 +17,14 @@ import 'package:cake_headless/runtime_context.dart';
 import 'package:cake_headless/services/wallet_lock.dart';
 import 'package:cw_core/root_dir.dart';
 
+/// Register all commands on a CommandBus without side effects.
+/// Useful for manifest generation and testing without acquiring locks.
+CommandBus registerAllCommands(CakeRuntimeContext ctx) {
+  final bus = CommandBus(ctx);
+  _registerCommands(bus);
+  return bus;
+}
+
 /// Bootstrap the headless runtime: set up paths, lock wallet dir, register commands.
 Future<CommandBus> bootstrap(CakeRuntimeContext ctx) async {
   final appDir = await ctx.pathProvider.getAppDir();
@@ -26,8 +34,11 @@ Future<CommandBus> bootstrap(CakeRuntimeContext ctx) async {
   await lock.acquire(appDir);
   ctx.walletLock = lock;
 
-  final bus = CommandBus(ctx);
+  final bus = registerAllCommands(ctx);
+  return bus;
+}
 
+void _registerCommands(CommandBus bus) {
   // Wallet
   bus.register(ListWalletsCommand());
   bus.register(GetBalanceCommand());
@@ -114,6 +125,4 @@ Future<CommandBus> bootstrap(CakeRuntimeContext ctx) async {
   for (final cmd in createUnsupportedCommands()) {
     bus.register(cmd);
   }
-
-  return bus;
 }

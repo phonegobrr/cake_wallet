@@ -72,14 +72,16 @@ class HeadlessCliCommand extends Command<void> {
           argParser.addFlag(
             entry.key,
             help: arg.description,
-            defaultsTo: arg.defaultValue == 'true',
+            defaultsTo: arg.defaultValue == true ||
+                arg.defaultValue?.toString() == 'true',
           );
         } else {
           argParser.addOption(
             entry.key,
             help: arg.description,
             mandatory: arg.required,
-            defaultsTo: arg.defaultValue,
+            defaultsTo: arg.defaultValue?.toString(),
+            allowed: arg.choices,
           );
         }
       }

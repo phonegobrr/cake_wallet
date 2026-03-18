@@ -57,4 +57,9 @@ class JsonSettingsStore implements SettingsStorePort {
     _cache![key] = value;
     await _save();
   }
+
+  @override
+  Future<Map<String, dynamic>> readAll() async {
+    return Map<String, dynamic>.from(await _load());
+  }
 }

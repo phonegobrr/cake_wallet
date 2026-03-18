@@ -5,4 +5,5 @@ abstract class SettingsStorePort {
   Future<void> setInt(String key, int value);
   Future<bool?> getBool(String key);
   Future<void> setBool(String key, bool value);
+  Future<Map<String, dynamic>> readAll();
 }

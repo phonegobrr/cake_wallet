@@ -36,7 +36,8 @@ class ListWalletsCommand extends WalletCommand<List<WalletSummary>> {
               typeRaw: w.type.index,
               typeName: w.type.toString().split('.').last,
               isActive: activeWallet != null &&
-                  activeWallet.walletInfo.name == w.name,
+                  activeWallet.walletInfo.name == w.name &&
+                  activeWallet.type == w.type,
             ))
         .toList());
   }
@@ -118,6 +119,14 @@ class OpenWalletCommand extends WalletCommand<WalletSummary> {
 
     try {
       await ctx.loadWallet!(walletName, typeRaw);
+      // Connect to node and start sync after loading
+      if (ctx.connectAndSync != null) {
+        try {
+          await ctx.connectAndSync!();
+        } catch (e) {
+          ctx.logger.warn('Post-open node connection failed: $e');
+        }
+      }
       return CommandResult.ok(
         WalletSummary(
           name: walletName,
@@ -251,7 +260,7 @@ class RescanWalletCommand extends WalletCommand<Map<String, String>> {
             name: 'height',
             description: 'Block height to rescan from',
             type: int,
-            defaultValue: '0'),
+            defaultValue: 0),
       };
 
   @override
@@ -407,6 +416,8 @@ class DeleteWalletCommand extends WalletCommand<Map<String, String>> {
   String get name => 'wallet.delete';
   @override
   String get description => 'Delete a wallet';
+  @override
+  bool get isDestructive => true;
   @override
   Map<String, CommandArg> get args => {
         'name': CommandArg(
@@ -584,7 +595,7 @@ class SyncStopCommand extends WalletCommand<Map<String, String>> {
       return CommandResult.error('NO_WALLET', message: ctx.strings.noWalletOpen);
     }
     try {
-      ctx.wallet!.stopSync();
+      await ctx.wallet!.stopSync();
       return CommandResult.ok(
         {'status': 'stopped'},
         message: 'Synchronization stopped',

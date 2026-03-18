@@ -18,22 +18,8 @@ class ListSettingsCommand extends WalletCommand<Map<String, String>> {
     CakeRuntimeContext ctx,
     Map<String, dynamic> params,
   ) async {
-    final keys = [
-      'current_fiat_currency',
-      'current_exchange_mode',
-      'current_default_settings_migration_version',
-      'current_pin_length',
-      'current_language_code',
-      'current_theme',
-      'bitcoin_amount_display_mode',
-      'should_save_recipient_address',
-      'allow_biometrical_authentication',
-    ];
-    final result = <String, String>{};
-    for (final key in keys) {
-      final val = await ctx.settings.getString(key);
-      if (val != null) result[key] = val;
-    }
+    final all = await ctx.settings.readAll();
+    final result = all.map((k, v) => MapEntry(k, v.toString()));
     return CommandResult.ok(result);
   }
 }

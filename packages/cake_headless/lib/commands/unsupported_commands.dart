@@ -20,6 +20,9 @@ class UnsupportedCommand extends WalletCommand<Map<String, String>> {
   Map<String, CommandArg> get args => {};
 
   @override
+  CommandStatus get status => CommandStatus.unsupported;
+
+  @override
   Future<CommandResult<Map<String, String>>> execute(
     CakeRuntimeContext ctx,
     Map<String, dynamic> params,
