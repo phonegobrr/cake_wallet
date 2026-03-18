@@ -1,5 +1,6 @@
 import 'package:dart_lipgloss/dart_lipgloss.dart';
 import 'package:cake_headless/commands/command_bus.dart';
+import 'package:cake_headless/dto/swap_quote.dart';
 import 'package:cake_console/tui/tui_theme.dart';
 import 'package:cake_console/tui/terminal_driver.dart';
 import 'package:cake_console/tui/screen.dart';
@@ -12,6 +13,8 @@ class ExchangeScreen extends TuiScreen {
   int _focusField = 0; // 0=from, 1=to, 2=amount
   String? _statusMessage;
   bool _statusIsError = false;
+  SwapQuote? _quote;
+  bool _inFlight = false;
 
   ExchangeScreen(this._bus);
 
@@ -53,9 +56,25 @@ class ExchangeScreen extends TuiScreen {
       '${fieldLabel(0, "From    ")}$fromVal',
       '${fieldLabel(1, "To      ")}$toVal',
       '${fieldLabel(2, "Amount  ")}$amtVal',
-      '',
-      hints,
     ];
+
+    // Show quote details if available
+    if (_quote != null) {
+      parts.add('');
+      parts.add(successStyle().render('  Quote Details:'));
+      parts.add(mutedStyle().render(
+          '  Provider: ${_quote!.provider}'));
+      parts.add(mutedStyle().render(
+          '  Send: ${_quote!.fromAmount} ${_quote!.fromCurrency}'));
+      parts.add(mutedStyle().render(
+          '  Receive: ${_quote!.toAmount} ${_quote!.toCurrency}'));
+      if (_quote!.rateId != null) {
+        parts.add(mutedStyle().render(
+            '  Rate ID: ${_quote!.rateId}'));
+      }
+    }
+
+    parts.addAll(['', hints]);
 
     if (_statusMessage != null) {
       final style = _statusIsError ? errorStyle() : successStyle();
@@ -74,6 +93,7 @@ class ExchangeScreen extends TuiScreen {
       _amount = '';
       _focusField = 0;
       _statusMessage = null;
+      _quote = null;
     } else if (event.key == TerminalKey.enter) {
       _getQuote();
     } else if (event.key == TerminalKey.up) {
@@ -123,20 +143,27 @@ class ExchangeScreen extends TuiScreen {
   }
 
   void _getQuote() {
+    if (_inFlight) return;
     if (_fromCurrency.isEmpty || _toCurrency.isEmpty || _amount.isEmpty) {
       _statusMessage = 'All fields are required';
       _statusIsError = true;
       return;
     }
+    _inFlight = true;
     _statusMessage = 'Getting quote...';
     _statusIsError = false;
+    _quote = null;
+    onStateChanged?.call();
+
     _bus.dispatch('swap.quote', {
       'from': _fromCurrency,
       'to': _toCurrency,
       'amount': _amount,
     }).then((result) {
-      if (result.success) {
-        _statusMessage = 'Quote received';
+      _inFlight = false;
+      if (result.success && result.data is SwapQuote) {
+        _quote = result.data as SwapQuote;
+        _statusMessage = 'Quote received from ${_quote!.provider}';
         _statusIsError = false;
       } else {
         _statusMessage =

@@ -81,7 +81,7 @@ class WalletListScreen extends TuiScreen {
     }).toList();
 
     final hints =
-        mutedStyle().render('  Enter: open wallet  Up/Down: navigate');
+        mutedStyle().render('  Enter: open  d: delete  Up/Down: navigate');
 
     final parts = <String>[header, '', ...rows, '', hints];
 
@@ -103,6 +103,8 @@ class WalletListScreen extends TuiScreen {
       _selectedIndex = (_selectedIndex + 1).clamp(0, maxIndex);
     } else if (event.key == TerminalKey.enter) {
       _openSelected();
+    } else if (event.key == TerminalKey.char && event.char == 'd') {
+      _deleteSelected();
     }
   }
 
@@ -120,6 +122,28 @@ class WalletListScreen extends TuiScreen {
         _statusIsError = false;
       } else {
         _statusMessage = result.message ?? 'Failed to open wallet';
+        _statusIsError = true;
+      }
+      onStateChanged?.call();
+    });
+  }
+
+  void _deleteSelected() {
+    if (_wallets.isEmpty) return;
+    final w = _wallets[_selectedIndex];
+    _statusMessage = 'Deleting ${w.name}...';
+    _statusIsError = false;
+    onStateChanged?.call();
+    _bus.dispatch('wallet.delete', {
+      'name': w.name,
+      'type': w.typeRaw,
+    }).then((result) {
+      if (result.success) {
+        _statusMessage = 'Deleted ${w.name}';
+        _statusIsError = false;
+        refresh().then((_) => onStateChanged?.call());
+      } else {
+        _statusMessage = result.message ?? 'Failed to delete wallet';
         _statusIsError = true;
       }
       onStateChanged?.call();

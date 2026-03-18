@@ -11,6 +11,8 @@ class ContactsScreen extends TuiScreen {
   int _selectedIndex = 0;
   int _scrollOffset = 0;
   bool _isLoading = true;
+  String? _statusMessage;
+  bool _statusIsError = false;
 
   ContactsScreen(this._bus);
 
@@ -83,7 +85,17 @@ class ContactsScreen extends TuiScreen {
           .render('$marker${c.label ?? "Unnamed"}$currency: ${c.address}');
     }).toList();
 
-    return joinVertical(posLeft, [header, '', ...rows]);
+    final parts = <String>[header, '', ...rows];
+
+    parts.add('');
+    parts.add(mutedStyle().render('  d: delete  Up/Down: navigate'));
+
+    if (_statusMessage != null) {
+      final style = _statusIsError ? errorStyle() : successStyle();
+      parts.add(style.render('  $_statusMessage'));
+    }
+
+    return joinVertical(posLeft, parts);
   }
 
   @override
@@ -94,6 +106,28 @@ class ContactsScreen extends TuiScreen {
       _selectedIndex = (_selectedIndex - 1).clamp(0, maxIndex);
     } else if (event.key == TerminalKey.down) {
       _selectedIndex = (_selectedIndex + 1).clamp(0, maxIndex);
+    } else if (event.key == TerminalKey.char && event.char == 'd') {
+      _deleteSelected();
     }
+  }
+
+  void _deleteSelected() {
+    if (_contacts.isEmpty) return;
+    final c = _contacts[_selectedIndex];
+    final name = c.label ?? c.address;
+    _statusMessage = 'Deleting $name...';
+    _statusIsError = false;
+    onStateChanged?.call();
+    _bus.dispatch('contacts.delete', {'name': name}).then((result) {
+      if (result.success) {
+        _statusMessage = 'Deleted $name';
+        _statusIsError = false;
+        refresh().then((_) => onStateChanged?.call());
+      } else {
+        _statusMessage = result.message ?? 'Failed to delete';
+        _statusIsError = true;
+      }
+      onStateChanged?.call();
+    });
   }
 }

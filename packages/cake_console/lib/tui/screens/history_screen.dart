@@ -11,6 +11,7 @@ class HistoryScreen extends TuiScreen {
   int _selectedIndex = 0;
   int _scrollOffset = 0;
   bool _isLoading = true;
+  Map<String, String>? _txDetail;
 
   HistoryScreen(this._bus);
 
@@ -84,18 +85,58 @@ class HistoryScreen extends TuiScreen {
             '  Showing ${_scrollOffset + 1}-${_scrollOffset + visible.length} of ${_txs.length}')
         : '';
 
-    return joinVertical(
-        posLeft, [header, '', ...rows, if (scrollInfo.isNotEmpty) scrollInfo]);
+    final parts = <String>[header, '', ...rows];
+    if (scrollInfo.isNotEmpty) parts.add(scrollInfo);
+
+    // Show transaction details if selected
+    if (_txDetail != null) {
+      parts.add('');
+      parts.add(successStyle().render('  Transaction Details:'));
+      for (final entry in _txDetail!.entries) {
+        parts.add(mutedStyle().render('  ${entry.key}: ${entry.value}'));
+      }
+    }
+
+    parts.add('');
+    parts.add(mutedStyle().render('  Enter: details  Up/Down: navigate  Esc: close details'));
+
+    return joinVertical(posLeft, parts);
   }
 
   @override
   void handleInput(TerminalEvent event) {
+    if (event.key == TerminalKey.escape) {
+      _txDetail = null;
+      return;
+    }
     if (_txs.isEmpty) return;
     final maxIndex = _txs.length - 1;
     if (event.key == TerminalKey.up) {
       _selectedIndex = (_selectedIndex - 1).clamp(0, maxIndex);
+      _txDetail = null;
     } else if (event.key == TerminalKey.down) {
       _selectedIndex = (_selectedIndex + 1).clamp(0, maxIndex);
+      _txDetail = null;
+    } else if (event.key == TerminalKey.enter) {
+      _showDetails();
     }
+  }
+
+  void _showDetails() {
+    if (_txs.isEmpty) return;
+    final tx = _txs[_selectedIndex];
+    _bus.dispatch('history.details', {'id': tx.id}).then((result) {
+      if (result.success && result.data != null) {
+        try {
+          final json = (result.data as dynamic).toJson();
+          if (json is Map) {
+            _txDetail = json.map((k, v) => MapEntry(k.toString(), v.toString()));
+          }
+        } catch (_) {
+          _txDetail = {'id': tx.id, 'amount': tx.amount, 'date': tx.dateFormatted};
+        }
+      }
+      onStateChanged?.call();
+    });
   }
 }
