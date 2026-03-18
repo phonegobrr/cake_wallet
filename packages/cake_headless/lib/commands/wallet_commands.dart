@@ -2,6 +2,7 @@ import 'package:cake_headless/commands/command.dart';
 import 'package:cake_headless/commands/command_result.dart';
 import 'package:cake_headless/dto/wallet_summary.dart';
 import 'package:cake_headless/dto/balance_snapshot.dart';
+import 'package:cake_headless/events/wallet_event.dart';
 import 'package:cake_headless/runtime_context.dart';
 import 'package:cw_core/wallet_info.dart';
 
@@ -127,6 +128,8 @@ class OpenWalletCommand extends WalletCommand<WalletSummary> {
           ctx.logger.warn('Post-open node connection failed: $e');
         }
       }
+      ctx.eventBus.emit(WalletEvent(WalletEventType.walletOpened,
+          data: {'name': walletName, 'type': typeRaw}));
       return CommandResult.ok(
         WalletSummary(
           name: walletName,
@@ -162,6 +165,8 @@ class CloseWalletCommand extends WalletCommand<Map<String, String>> {
     try {
       await ctx.wallet!.close(shouldCleanup: false);
       ctx.wallet = null;
+      ctx.eventBus.emit(WalletEvent(WalletEventType.walletClosed,
+          data: {'name': name}));
       return CommandResult.ok(
         {'closed': name},
         message: 'Wallet "$name" closed',

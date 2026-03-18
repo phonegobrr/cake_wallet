@@ -1,6 +1,7 @@
 import 'package:cake_headless/commands/command.dart';
 import 'package:cake_headless/commands/command_result.dart';
 import 'package:cake_headless/dto/send_result.dart';
+import 'package:cake_headless/events/wallet_event.dart';
 import 'package:cake_headless/runtime_context.dart';
 
 class SendPreviewCommand extends WalletCommand<Map<String, String>> {
@@ -183,6 +184,12 @@ class SendCommand extends WalletCommand<SendResult> {
       try {
         final result = await ctx.sendTransaction!(address, amount,
             priority: priority);
+        ctx.eventBus.emit(WalletEvent(WalletEventType.transactionSent,
+            data: {
+              'txHash': result.txHash,
+              'amount': result.amount,
+              'address': result.address,
+            }));
         return CommandResult.ok(result,
             message: 'Transaction sent: ${result.txHash}');
       } catch (e) {

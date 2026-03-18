@@ -68,7 +68,7 @@ class ExchangeScreen extends TuiScreen {
           '  Send: ${_quote!.fromAmount} ${_quote!.fromCurrency}'));
       parts.add(mutedStyle().render(
           '  Receive: ${_quote!.toAmount} ${_quote!.toCurrency}'));
-      if (_quote!.rateId != null) {
+      if (_quote!.rateId.isNotEmpty) {
         parts.add(mutedStyle().render(
             '  Rate ID: ${_quote!.rateId}'));
       }
