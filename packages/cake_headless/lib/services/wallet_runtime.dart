@@ -1,5 +1,8 @@
+import 'package:cake_headless/events/wallet_event.dart';
 import 'package:cake_headless/runtime_context.dart';
+import 'package:cw_core/sync_status.dart';
 import 'package:cw_core/wallet_info.dart';
+import 'package:mobx/mobx.dart';
 
 /// Bridge between [CakeRuntimeContext] and the GetIt DI container.
 ///
@@ -20,6 +23,7 @@ import 'package:cw_core/wallet_info.dart';
 /// ```
 class WalletRuntime {
   final CakeRuntimeContext ctx;
+  final List<ReactionDisposer> _disposers = [];
 
   WalletRuntime(this.ctx);
 
@@ -29,6 +33,57 @@ class WalletRuntime {
   Future<void> wireAll() async {
     // Wire listWalletInfos — WalletInfo.getAll() reads from SQLite
     ctx.listWalletInfos = () => WalletInfo.getAll();
+  }
+
+  /// Set up MobX reactions on the current wallet to emit events
+  /// to [WalletEventBus] when sync status or balance changes.
+  /// Call this after a wallet has been loaded on [ctx.wallet].
+  void wireWalletReactions() {
+    // Dispose any existing reactions from a previous wallet
+    disposeReactions();
+
+    final wallet = ctx.wallet;
+    if (wallet == null) return;
+
+    // Emit sync status changes
+    _disposers.add(reaction<SyncStatus>(
+      (_) => wallet.syncStatus,
+      (status) {
+        ctx.eventBus.emit(WalletEvent(
+          WalletEventType.syncStatusChanged,
+          data: {
+            'progress': status.progress(),
+            'display': status.toString(),
+            'wallet': wallet.walletInfo.name,
+          },
+        ));
+      },
+    ));
+
+    // Emit balance changes
+    _disposers.add(reaction<Map>(
+      (_) => wallet.balance,
+      (balanceMap) {
+        final data = <String, dynamic>{
+          'wallet': wallet.walletInfo.name,
+        };
+        for (final entry in balanceMap.entries) {
+          data[entry.key.title] = entry.value.available.toString();
+        }
+        ctx.eventBus.emit(WalletEvent(
+          WalletEventType.balanceChanged,
+          data: data,
+        ));
+      },
+    ));
+  }
+
+  /// Dispose all active MobX reactions.
+  void disposeReactions() {
+    for (final d in _disposers) {
+      d();
+    }
+    _disposers.clear();
   }
 
   /// Try to auto-load the last used wallet using the loadWallet callback.
@@ -46,6 +101,7 @@ class WalletRuntime {
       if (name != null && typeRaw != null) {
         ctx.logger.info('Auto-loading wallet "$name" (type: $typeRaw)');
         await ctx.loadWallet!(name, typeRaw);
+        wireWalletReactions();
       }
     } catch (e) {
       ctx.logger.warn('Failed to auto-load wallet: $e');

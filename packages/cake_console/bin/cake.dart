@@ -62,6 +62,15 @@ Future<void> main(List<String> args) async {
   final runtime = WalletRuntime(ctx);
   await runtime.wireAll();
 
+  // Wrap loadWallet to wire MobX reactions after each wallet open
+  final originalLoadWallet = ctx.loadWallet;
+  if (originalLoadWallet != null) {
+    ctx.loadWallet = (name, typeRaw) async {
+      await originalLoadWallet(name, typeRaw);
+      runtime.wireWalletReactions();
+    };
+  }
+
   // Build CLI runner
   final runner = CommandRunner<void>('cake', 'Cake Wallet CLI/TUI')
     ..addCommand(TuiCommand(bus, ctx.eventBus))
