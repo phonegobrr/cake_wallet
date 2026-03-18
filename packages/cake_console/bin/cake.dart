@@ -52,6 +52,7 @@ Future<void> main(List<String> args) async {
   await initializeHeadlessCore(
     dataDir: appDir,
     secureStorage: HeadlessSecureStorageAdapter(secureStorage),
+    assetLoader: ctx.assetLoader,
   );
 
   // Use bootstrap() to register all commands and acquire wallet lock

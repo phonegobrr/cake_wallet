@@ -1,5 +1,6 @@
 import 'package:cw_core/cake_hive.dart';
 import 'package:cw_core/db/sqlite.dart';
+import 'package:cw_core/generate_name.dart' show setAssetLoader;
 import 'package:cw_core/node.dart';
 import 'package:cw_core/payjoin_session.dart';
 import 'package:cw_core/register_adapters.dart';
@@ -8,6 +9,8 @@ import 'package:cw_core/secure_storage.dart';
 import 'package:cw_core/unspent_coins_info.dart';
 import 'package:cw_core/utils/proxy_wrapper.dart';
 import 'package:cw_core/utils/tor/disabled.dart';
+import 'package:cw_core/wallet_info.dart' show performHiveMigration;
+import 'package:cake_headless/ports/asset_loader_port.dart';
 import 'package:get_it/get_it.dart';
 
 /// Headless initialization using cw_core types (no Flutter).
@@ -18,6 +21,7 @@ import 'package:get_it/get_it.dart';
 Future<void> initializeHeadlessCore({
   required String dataDir,
   required SecureStorage secureStorage,
+  AssetLoaderPort? assetLoader,
 }) async {
   setRootDirOverride(dataDir);
 
@@ -33,6 +37,9 @@ Future<void> initializeHeadlessCore({
   // Initialize SQLite (for WalletInfo)
   await initDb();
 
+  // Run Hive→SQLite migration for legacy WalletInfo entries
+  await performHiveMigration();
+
   // Open cw_core Hive boxes
   await CakeHive.openBox<Node>(Node.boxName);
   await CakeHive.openBox<Node>('${Node.boxName}pow');
@@ -43,5 +50,10 @@ Future<void> initializeHeadlessCore({
   final di = GetIt.instance;
   if (!di.isRegistered<SecureStorage>()) {
     di.registerSingleton<SecureStorage>(secureStorage);
+  }
+
+  // Wire asset loader for cw_core/generate_name.dart
+  if (assetLoader != null) {
+    setAssetLoader((path) => assetLoader.loadString(path));
   }
 }

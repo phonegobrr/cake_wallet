@@ -139,7 +139,7 @@ Future<void> setupCore({
   if (!getIt.isRegistered<WalletService>(param1: WalletType.monero)) {
     getIt.registerFactoryParam<WalletService, WalletType, void>(
         (WalletType param1, __) {
-      return _createWalletService(
+      return createWalletServiceForType(
         param1,
         unspentCoinsInfoSource,
         payjoinSessionSource,
@@ -179,8 +179,8 @@ Future<void> setupCore({
 }
 
 /// Creates the appropriate WalletService for the given wallet type.
-/// Shared between di.dart (Flutter) and di_core.dart (headless).
-WalletService _createWalletService(
+/// Shared between di.dart (Flutter), di_core.dart (headless), and bridge.
+WalletService createWalletServiceForType(
   WalletType type,
   Box<UnspentCoinsInfo> unspentCoinsInfoSource,
   Box<PayjoinSession> payjoinSessionSource,
