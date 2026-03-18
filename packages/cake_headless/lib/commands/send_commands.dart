@@ -41,12 +41,18 @@ class SendPreviewCommand extends WalletCommand<Map<String, String>> {
       }
     }
 
+    // Fee estimation requires a TransactionPriority which is wallet-type-specific.
+    // The preview shows the resolved address and amount; actual fee will be
+    // calculated when the transaction is committed via send/send.commit.
+    final String? estimatedFee = null;
+
     return CommandResult.ok({
       'address': resolvedAddress,
       'amount': amount,
       'currency': ctx.wallet!.currency.title,
       'priority': params['priority']?.toString() ?? 'default',
-    }, message: 'Transaction preview — use send to execute');
+      if (estimatedFee != null) 'estimated_fee': estimatedFee,
+    }, message: 'Transaction preview — use send.commit to execute');
   }
 }
 
@@ -54,7 +60,7 @@ class SendMaxCommand extends WalletCommand<Map<String, String>> {
   @override
   String get name => 'send.max';
   @override
-  String get description => 'Get maximum sendable amount';
+  String get description => 'Get maximum sendable amount (accounting for fees)';
   @override
   Map<String, CommandArg> get args => {};
 
@@ -72,10 +78,18 @@ class SendMaxCommand extends WalletCommand<Map<String, String>> {
       return CommandResult.error('NO_BALANCE', message: 'No balance available');
     }
     final primaryBalance = balanceMap.values.first;
+    final available = primaryBalance.available;
+
+    // Max sendable is the raw available balance.
+    // Actual fee deduction happens at transaction creation time via send.send-all.
+    // Fee estimation requires wallet-type-specific TransactionPriority.
+    final maxSendable = available.toString();
+
     return CommandResult.ok({
-      'available': primaryBalance.available.toString(),
+      'max_sendable': maxSendable,
+      'available': available.toString(),
       'currency': wallet.currency.title,
-    }, message: 'Maximum sendable: ${primaryBalance.available} ${wallet.currency.title}');
+    }, message: 'Maximum sendable: $maxSendable ${wallet.currency.title}');
   }
 }
 

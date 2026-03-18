@@ -55,8 +55,11 @@ Future<void> main(List<String> args) async {
     assetLoader: ctx.assetLoader,
   );
 
-  // Use bootstrap() to register all commands and acquire wallet lock
-  final bus = await bootstrap(ctx);
+  // Skip exclusive lock for read-only commands like manifest, help
+  final readOnlyCommands = {'manifest', '--help', '-h'};
+  final firstPositional = args.where((a) => !a.startsWith('-')).firstOrNull;
+  final skipLock = firstPositional != null && readOnlyCommands.contains(firstPositional);
+  final bus = await bootstrap(ctx, skipLock: skipLock);
 
   // Wire WalletRuntime callbacks (cw_core-only: WalletInfo.getAll)
   final runtime = WalletRuntime(ctx);

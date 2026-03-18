@@ -26,13 +26,16 @@ CommandBus registerAllCommands(CakeRuntimeContext ctx) {
 }
 
 /// Bootstrap the headless runtime: set up paths, lock wallet dir, register commands.
-Future<CommandBus> bootstrap(CakeRuntimeContext ctx) async {
+/// Set [skipLock] to true for read-only commands that don't need exclusive access.
+Future<CommandBus> bootstrap(CakeRuntimeContext ctx, {bool skipLock = false}) async {
   final appDir = await ctx.pathProvider.getAppDir();
   setRootDirOverride(appDir);
 
-  final lock = WalletLock();
-  await lock.acquire(appDir);
-  ctx.walletLock = lock;
+  if (!skipLock) {
+    final lock = WalletLock();
+    await lock.acquire(appDir);
+    ctx.walletLock = lock;
+  }
 
   final bus = registerAllCommands(ctx);
   return bus;
