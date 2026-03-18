@@ -408,15 +408,30 @@ abstract class OutputBase with Store {
     note = parsedAddress.description;
   }
 
-  /// Headless address resolution. When multiple candidates exist,
-  /// uses the provided [addressPicker] or takes the first result.
+  /// Headless address resolution using AddressResolver.resolveHeadless().
+  /// Supports OpenAlias, BIP353, and Unstoppable Domains without Flutter.
+  /// When multiple candidates exist, uses [addressPicker] or takes the first.
+  ///
+  /// Requires an AddressResolver to be provided. If not available, falls back
+  /// to treating the address as a literal.
   Future<void> fetchParsedAddressHeadless({
+    AddressResolver? resolver,
     Future<String?> Function(String domain, Map<String, String> choices)? addressPicker,
   }) async {
-    // In headless mode, treat the address as a literal address without
-    // domain resolution. Full domain resolution requires the AddressResolver
-    // which has Flutter dependencies. Headless callers should pass
-    // pre-resolved addresses directly.
+    if (resolver != null) {
+      try {
+        final result = await resolver.resolveHeadless(
+          address,
+          _wallet.currency,
+          addressPicker: addressPicker,
+        );
+        parsedAddress = result;
+        extractedAddress = result.addresses.first;
+        return;
+      } catch (_) {
+        // Fall through to raw address
+      }
+    }
     parsedAddress = ParsedAddress(addresses: [address]);
     extractedAddress = address;
   }
