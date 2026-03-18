@@ -8,6 +8,8 @@ import 'package:cake_console/cli/cli_runner.dart';
 import 'package:cake_console/cli/host_command.dart';
 import 'package:cake_console/cli/watch_command.dart';
 import 'package:cake_console/cli/manifest_command.dart';
+import 'package:cw_core/cake_hive.dart';
+import 'package:cw_core/node.dart';
 import 'package:cw_core/utils/print_verbose.dart' show printVSink;
 
 Future<void> main(List<String> args) async {
@@ -70,6 +72,13 @@ Future<void> main(List<String> args) async {
   // This is called by OpenWalletCommand after loadWallet succeeds.
   ctx.onWalletLoaded = () => runtime.wireWalletReactions();
 
+  // Wire bridge callbacks using cw_core types and Hive boxes (Section 4.3).
+  // These provide direct data access without Flutter DI.
+  _wireBridgeCallbacks(ctx, secureStorage);
+
+  // Auto-load the last used wallet if loadWallet is wired (Section 4.6)
+  await runtime.autoLoadCurrentWallet();
+
   // Build CLI runner
   final runner = CommandRunner<void>('cake', 'Cake Wallet CLI/TUI')
     ..addCommand(TuiCommand(bus, ctx.eventBus))
@@ -120,6 +129,86 @@ Future<void> main(List<String> args) async {
     stderr.writeln(e);
     exitCode = 64;
   }
+}
+
+/// Wire bridge callbacks on CakeRuntimeContext using cw_core types and Hive boxes.
+/// These provide data access for commands without requiring Flutter DI.
+void _wireBridgeCallbacks(CakeRuntimeContext ctx, FileSecureStorage secureStorage) {
+  // Wire listNodes from Hive box
+  ctx.listNodes ??= () async {
+    final box = CakeHive.box<Node>(Node.boxName);
+    final wallet = ctx.wallet;
+    return box.values
+        .where((n) => wallet == null || n.type == wallet.type)
+        .map((n) => NodeInfo(
+              uri: n.uriRaw,
+              name: n.label,
+              isActive: false,
+              isTrusted: n.trusted,
+            ))
+        .toList();
+  };
+
+  // Wire addNode to Hive box
+  ctx.addNode ??= (String uri, String name, bool trusted) async {
+    final wallet = ctx.wallet;
+    if (wallet == null) {
+      throw StateError('Cannot add node: no wallet is open to determine node type');
+    }
+    final box = CakeHive.box<Node>(Node.boxName);
+    final node = Node(uri: uri, type: wallet.type, trusted: trusted)
+      ..label = name;
+    await box.add(node);
+    return NodeInfo(uri: uri, name: name, isActive: false, isTrusted: trusted);
+  };
+
+  // Wire selectNode — find by URI and wallet type
+  ctx.selectNode ??= (String uri) async {
+    final box = CakeHive.box<Node>(Node.boxName);
+    final wallet = ctx.wallet;
+    final node = box.values.where((n) =>
+        n.uriRaw == uri &&
+        (wallet == null || n.type == wallet.type)).firstOrNull;
+    if (node == null) {
+      throw StateError('Node not found: $uri');
+    }
+    // Connect to the selected node if wallet is open
+    if (wallet != null) {
+      await wallet.connectToNode(node: node);
+    }
+    return NodeInfo(uri: node.uriRaw, name: node.label, isActive: true, isTrusted: node.trusted);
+  };
+
+  // Wire deleteNode — match by URI AND wallet type
+  ctx.deleteNode ??= (String uri) async {
+    final wallet = ctx.wallet;
+    if (wallet == null) {
+      throw StateError('Cannot delete node: no wallet is open to scope deletion by type');
+    }
+    final box = CakeHive.box<Node>(Node.boxName);
+    final node = box.values.where((n) =>
+        n.uriRaw == uri && n.type == wallet.type).firstOrNull;
+    if (node != null) {
+      await node.delete();
+    }
+  };
+
+  // Wire connectAndSync
+  ctx.connectAndSync ??= () async {
+    final wallet = ctx.wallet;
+    if (wallet == null) return;
+    await wallet.startSync();
+  };
+
+  // Wire resolveAddress — headless address resolution using raw address passthrough.
+  // OpenAlias/BIP353/UD resolution requires AddressResolver with Flutter dependencies.
+  // The CLI/MCP path uses this callback; the Flutter app uses AddressResolver directly.
+  ctx.resolveAddress ??= (String input, String currencyTitle) async {
+    // In pure-Dart headless mode, treat as literal address.
+    // Full domain resolution is available when the bridge package wires
+    // an AddressResolver-backed callback.
+    return input;
+  };
 }
 
 bool _isJson(List<String> args) => args.contains('--json');
