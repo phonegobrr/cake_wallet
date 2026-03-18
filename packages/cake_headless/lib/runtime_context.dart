@@ -106,6 +106,10 @@ class CakeRuntimeContext {
   /// Callback to connect the current wallet to its node and start sync.
   Future<void> Function()? connectAndSync;
 
+  /// Hook called after a wallet is successfully loaded/opened.
+  /// Used by WalletRuntime to wire MobX reactions for event emissions.
+  void Function()? onWalletLoaded;
+
   /// The wallet lock acquired during bootstrap. Used for graceful shutdown.
   WalletLock? walletLock;
 

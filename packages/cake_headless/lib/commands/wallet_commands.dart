@@ -142,6 +142,8 @@ class OpenWalletCommand extends WalletCommand<WalletSummary> {
       }
       ctx.eventBus.emit(WalletEvent(WalletEventType.walletOpened,
           data: {'name': walletName, 'type': typeRaw}));
+      // Notify runtime to wire post-load hooks (e.g. MobX reactions)
+      ctx.onWalletLoaded?.call();
       return CommandResult.ok(
         WalletSummary(
           name: walletName,

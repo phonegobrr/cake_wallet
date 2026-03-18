@@ -60,22 +60,24 @@ class WalletRuntime {
       },
     ));
 
-    // Emit balance changes
-    _disposers.add(reaction<Map>(
-      (_) => wallet.balance,
-      (balanceMap) {
-        final data = <String, dynamic>{
-          'wallet': wallet.walletInfo.name,
-        };
-        for (final entry in balanceMap.entries) {
-          data[entry.key.title] = entry.value.available.toString();
-        }
-        ctx.eventBus.emit(WalletEvent(
-          WalletEventType.balanceChanged,
-          data: data,
-        ));
-      },
-    ));
+    // Emit balance changes — observe the map length and first value's available
+    // amount as a proxy, since wallet implementations mutate the ObservableMap
+    // in place rather than replacing it.
+    _disposers.add(autorun((_) {
+      final balanceMap = wallet.balance;
+      if (balanceMap.isEmpty) return;
+      // Touch each value to establish MobX dependency tracking
+      final data = <String, dynamic>{
+        'wallet': wallet.walletInfo.name,
+      };
+      for (final entry in balanceMap.entries) {
+        data[entry.key.title] = entry.value.available.toString();
+      }
+      ctx.eventBus.emit(WalletEvent(
+        WalletEventType.balanceChanged,
+        data: data,
+      ));
+    }));
   }
 
   /// Dispose all active MobX reactions.
