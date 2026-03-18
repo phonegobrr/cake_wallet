@@ -1,0 +1,1118 @@
+{
+  "version": "0.1.0",
+  "generated": "2026-03-18T10:25:36.161439",
+  "commands": [
+    {
+      "name": "backup.export",
+      "description": "Export encrypted backup",
+      "safe_for_non_interactive": false,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "output": {
+          "type": "String",
+          "required": true,
+          "description": "Output file path"
+        }
+      }
+    },
+    {
+      "name": "backup.import",
+      "description": "Import encrypted backup",
+      "safe_for_non_interactive": false,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "input": {
+          "type": "String",
+          "required": true,
+          "description": "Input backup file path"
+        }
+      }
+    },
+    {
+      "name": "backup.verify",
+      "description": "Verify a backup file is readable",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "input": {
+          "type": "String",
+          "required": true,
+          "description": "Backup file path to verify"
+        }
+      }
+    },
+    {
+      "name": "balance.get",
+      "description": "Get current wallet balance",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "buy.create",
+      "description": "Create fiat purchase",
+      "safe_for_non_interactive": true,
+      "status": "unsupported",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "buy.providers",
+      "description": "List fiat on-ramp providers",
+      "safe_for_non_interactive": true,
+      "status": "unsupported",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "buy.quote",
+      "description": "Get fiat purchase quote",
+      "safe_for_non_interactive": true,
+      "status": "unsupported",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "cakepay.account",
+      "description": "Get Cake Pay account info",
+      "safe_for_non_interactive": true,
+      "status": "unsupported",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "cakepay.auth",
+      "description": "Authenticate with Cake Pay",
+      "safe_for_non_interactive": true,
+      "status": "unsupported",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "cakepay.cards",
+      "description": "List Cake Pay gift cards",
+      "safe_for_non_interactive": true,
+      "status": "unsupported",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "cakepay.purchase",
+      "description": "Purchase a Cake Pay gift card",
+      "safe_for_non_interactive": true,
+      "status": "unsupported",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "coins.freeze",
+      "description": "Freeze a coin/UTXO to exclude from spending",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "id": {
+          "type": "String",
+          "required": true,
+          "description": "Coin/UTXO identifier"
+        }
+      }
+    },
+    {
+      "name": "coins.list",
+      "description": "List unspent coins/UTXOs",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "coins.unfreeze",
+      "description": "Unfreeze a previously frozen coin/UTXO",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "id": {
+          "type": "String",
+          "required": true,
+          "description": "Coin/UTXO identifier"
+        }
+      }
+    },
+    {
+      "name": "contacts.add",
+      "description": "Add a new contact",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "name": {
+          "type": "String",
+          "required": true,
+          "description": "Contact name"
+        },
+        "address": {
+          "type": "String",
+          "required": true,
+          "description": "Contact address"
+        },
+        "currency": {
+          "type": "String",
+          "required": false,
+          "description": "Currency code (e.g. XMR)"
+        }
+      }
+    },
+    {
+      "name": "contacts.delete",
+      "description": "Delete a contact by name",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "name": {
+          "type": "String",
+          "required": true,
+          "description": "Contact name"
+        }
+      }
+    },
+    {
+      "name": "contacts.edit",
+      "description": "Edit an existing contact",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "name": {
+          "type": "String",
+          "required": true,
+          "description": "Current contact name"
+        },
+        "new-name": {
+          "type": "String",
+          "required": false,
+          "description": "New contact name"
+        },
+        "address": {
+          "type": "String",
+          "required": false,
+          "description": "New address"
+        },
+        "currency": {
+          "type": "String",
+          "required": false,
+          "description": "Currency code"
+        }
+      }
+    },
+    {
+      "name": "contacts.list",
+      "description": "List all contacts",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "fiat.convert",
+      "description": "Convert between fiat and crypto amounts",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "amount": {
+          "type": "String",
+          "required": true,
+          "description": "Amount to convert"
+        },
+        "from": {
+          "type": "String",
+          "required": true,
+          "description": "Source currency (e.g. USD, XMR)"
+        },
+        "to": {
+          "type": "String",
+          "required": true,
+          "description": "Target currency (e.g. XMR, USD)"
+        }
+      }
+    },
+    {
+      "name": "hardware.accounts",
+      "description": "List hardware wallet accounts",
+      "safe_for_non_interactive": true,
+      "status": "unsupported",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "hardware.connect",
+      "description": "Connect to hardware wallet",
+      "safe_for_non_interactive": true,
+      "status": "unsupported",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "hardware.list",
+      "description": "List hardware wallets",
+      "safe_for_non_interactive": true,
+      "status": "unsupported",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "hardware.sign",
+      "description": "Sign with hardware wallet",
+      "safe_for_non_interactive": true,
+      "status": "unsupported",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "history.details",
+      "description": "Get details of a specific transaction",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "id": {
+          "type": "String",
+          "required": true,
+          "description": "Transaction ID"
+        }
+      }
+    },
+    {
+      "name": "history.list",
+      "description": "List transaction history",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "limit": {
+          "type": "int",
+          "required": false,
+          "description": "Max number of transactions",
+          "default": "50"
+        }
+      }
+    },
+    {
+      "name": "nodes.add",
+      "description": "Add a new node",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "uri": {
+          "type": "String",
+          "required": true,
+          "description": "Node URI"
+        },
+        "name": {
+          "type": "String",
+          "required": false,
+          "description": "Node label"
+        },
+        "trusted": {
+          "type": "bool",
+          "required": false,
+          "description": "Is trusted"
+        }
+      }
+    },
+    {
+      "name": "nodes.delete",
+      "description": "Delete a node by URI",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "uri": {
+          "type": "String",
+          "required": true,
+          "description": "Node URI to delete"
+        }
+      }
+    },
+    {
+      "name": "nodes.edit",
+      "description": "Edit an existing node",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "uri": {
+          "type": "String",
+          "required": true,
+          "description": "Current node URI"
+        },
+        "new-uri": {
+          "type": "String",
+          "required": false,
+          "description": "New node URI"
+        },
+        "name": {
+          "type": "String",
+          "required": false,
+          "description": "New node label"
+        },
+        "trusted": {
+          "type": "bool",
+          "required": false,
+          "description": "Is trusted"
+        }
+      }
+    },
+    {
+      "name": "nodes.list",
+      "description": "List configured nodes",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "nodes.reset",
+      "description": "Reset nodes to defaults for the current wallet type",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "nodes.select",
+      "description": "Select active node by URI",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "uri": {
+          "type": "String",
+          "required": true,
+          "description": "Node URI to select"
+        }
+      }
+    },
+    {
+      "name": "nodes.test",
+      "description": "Test connection to a node",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "uri": {
+          "type": "String",
+          "required": true,
+          "description": "Node URI to test"
+        }
+      }
+    },
+    {
+      "name": "payjoin.create",
+      "description": "Create a Payjoin transaction",
+      "safe_for_non_interactive": true,
+      "status": "unsupported",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "payjoin.status",
+      "description": "Check Payjoin status",
+      "safe_for_non_interactive": true,
+      "status": "unsupported",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "receive.address",
+      "description": "Get receive address for current wallet",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "receive.hide",
+      "description": "Hide a receive address from the list",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "address": {
+          "type": "String",
+          "required": true,
+          "description": "Address to hide"
+        }
+      }
+    },
+    {
+      "name": "receive.label",
+      "description": "Set a label on a receive address",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "address": {
+          "type": "String",
+          "required": true,
+          "description": "Address to label"
+        },
+        "label": {
+          "type": "String",
+          "required": true,
+          "description": "Label text"
+        }
+      }
+    },
+    {
+      "name": "receive.list",
+      "description": "List all receive addresses",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "receive.new",
+      "description": "Generate a new receive address (subaddress)",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "label": {
+          "type": "String",
+          "required": false,
+          "description": "Label for the new address"
+        }
+      }
+    },
+    {
+      "name": "receive.rotate",
+      "description": "Rotate to the next unused receive address",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "receive.unhide",
+      "description": "Unhide a hidden receive address",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "address": {
+          "type": "String",
+          "required": true,
+          "description": "Address to unhide"
+        }
+      }
+    },
+    {
+      "name": "receive.uri",
+      "description": "Get a payment URI for the current address",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "amount": {
+          "type": "String",
+          "required": false,
+          "description": "Amount to request"
+        }
+      }
+    },
+    {
+      "name": "sell.create",
+      "description": "Create fiat sale",
+      "safe_for_non_interactive": true,
+      "status": "unsupported",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "sell.providers",
+      "description": "List fiat off-ramp providers",
+      "safe_for_non_interactive": true,
+      "status": "unsupported",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "sell.quote",
+      "description": "Get fiat sell quote",
+      "safe_for_non_interactive": true,
+      "status": "unsupported",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "send",
+      "description": "Send a transaction",
+      "safe_for_non_interactive": false,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "address": {
+          "type": "String",
+          "required": true,
+          "description": "Destination address"
+        },
+        "amount": {
+          "type": "String",
+          "required": true,
+          "description": "Amount to send"
+        },
+        "priority": {
+          "type": "String",
+          "required": false,
+          "description": "Transaction priority"
+        }
+      }
+    },
+    {
+      "name": "send.commit",
+      "description": "Commit a previewed transaction (alias for send)",
+      "safe_for_non_interactive": false,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "address": {
+          "type": "String",
+          "required": true,
+          "description": "Destination address"
+        },
+        "amount": {
+          "type": "String",
+          "required": true,
+          "description": "Amount to send"
+        },
+        "priority": {
+          "type": "String",
+          "required": false,
+          "description": "Transaction priority"
+        }
+      }
+    },
+    {
+      "name": "send.max",
+      "description": "Get maximum sendable amount (accounting for fees)",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "send.preview",
+      "description": "Preview a transaction without sending",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "address": {
+          "type": "String",
+          "required": true,
+          "description": "Destination address"
+        },
+        "amount": {
+          "type": "String",
+          "required": true,
+          "description": "Amount to send"
+        },
+        "priority": {
+          "type": "String",
+          "required": false,
+          "description": "Transaction priority"
+        }
+      }
+    },
+    {
+      "name": "send.send-all",
+      "description": "Send entire wallet balance to an address (sweep)",
+      "safe_for_non_interactive": false,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "address": {
+          "type": "String",
+          "required": true,
+          "description": "Destination address"
+        },
+        "priority": {
+          "type": "String",
+          "required": false,
+          "description": "Transaction priority"
+        }
+      }
+    },
+    {
+      "name": "settings.get",
+      "description": "Get a single setting value",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "key": {
+          "type": "String",
+          "required": true,
+          "description": "Setting key"
+        }
+      }
+    },
+    {
+      "name": "settings.list",
+      "description": "List current settings",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "settings.set",
+      "description": "Update a setting",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "key": {
+          "type": "String",
+          "required": true,
+          "description": "Setting key"
+        },
+        "value": {
+          "type": "String",
+          "required": true,
+          "description": "Setting value"
+        }
+      }
+    },
+    {
+      "name": "swap.cancel",
+      "description": "Cancel a pending exchange trade",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "trade-id": {
+          "type": "String",
+          "required": true,
+          "description": "Trade ID to cancel"
+        }
+      }
+    },
+    {
+      "name": "swap.create",
+      "description": "Create an exchange trade from a quote",
+      "safe_for_non_interactive": false,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "from": {
+          "type": "String",
+          "required": true,
+          "description": "Source currency"
+        },
+        "to": {
+          "type": "String",
+          "required": true,
+          "description": "Target currency"
+        },
+        "amount": {
+          "type": "String",
+          "required": true,
+          "description": "Amount to swap"
+        },
+        "address": {
+          "type": "String",
+          "required": true,
+          "description": "Receiving address"
+        },
+        "refund": {
+          "type": "String",
+          "required": false,
+          "description": "Refund address"
+        }
+      }
+    },
+    {
+      "name": "swap.providers",
+      "description": "List available exchange providers",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "swap.quote",
+      "description": "Get exchange quote for a swap",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "from": {
+          "type": "String",
+          "required": true,
+          "description": "Source currency (e.g. XMR)"
+        },
+        "to": {
+          "type": "String",
+          "required": true,
+          "description": "Target currency (e.g. BTC)"
+        },
+        "amount": {
+          "type": "String",
+          "required": true,
+          "description": "Amount to swap"
+        }
+      }
+    },
+    {
+      "name": "swap.status",
+      "description": "Check status of an exchange trade",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "trade-id": {
+          "type": "String",
+          "required": true,
+          "description": "Trade ID to check"
+        }
+      }
+    },
+    {
+      "name": "sync.status",
+      "description": "Get wallet sync status",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "tokens.add",
+      "description": "Add a token to the wallet",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "address": {
+          "type": "String",
+          "required": true,
+          "description": "Token contract address"
+        }
+      }
+    },
+    {
+      "name": "tokens.list",
+      "description": "List tokens for the current wallet",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "tokens.remove",
+      "description": "Remove a token from the wallet",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "address": {
+          "type": "String",
+          "required": true,
+          "description": "Token contract address"
+        }
+      }
+    },
+    {
+      "name": "tor.disable",
+      "description": "Disable Tor connection",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "tor.enable",
+      "description": "Enable Tor connection",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "tor.status",
+      "description": "Get Tor connection status",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "wallet.close",
+      "description": "Close the current wallet",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "wallet.create",
+      "description": "Create a new wallet",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "name": {
+          "type": "String",
+          "required": true,
+          "description": "Wallet name"
+        },
+        "type": {
+          "type": "int",
+          "required": true,
+          "description": "Wallet type index"
+        },
+        "language": {
+          "type": "String",
+          "required": false,
+          "description": "Seed language",
+          "default": "English"
+        }
+      }
+    },
+    {
+      "name": "wallet.delete",
+      "description": "Delete a wallet",
+      "safe_for_non_interactive": false,
+      "status": "implemented",
+      "destructive": true,
+      "args": {
+        "name": {
+          "type": "String",
+          "required": true,
+          "description": "Wallet name"
+        },
+        "type": {
+          "type": "int",
+          "required": true,
+          "description": "Wallet type index"
+        }
+      }
+    },
+    {
+      "name": "wallet.keys",
+      "description": "Show wallet keys",
+      "safe_for_non_interactive": false,
+      "status": "implemented",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "wallet.list",
+      "description": "List all wallets",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "wallet.open",
+      "description": "Open/switch to a wallet by name",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "name": {
+          "type": "String",
+          "required": true,
+          "description": "Wallet name"
+        },
+        "type": {
+          "type": "int",
+          "required": true,
+          "description": "Wallet type index"
+        }
+      }
+    },
+    {
+      "name": "wallet.rename",
+      "description": "Rename a wallet",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "name": {
+          "type": "String",
+          "required": true,
+          "description": "Current wallet name"
+        },
+        "new-name": {
+          "type": "String",
+          "required": true,
+          "description": "New wallet name"
+        },
+        "type": {
+          "type": "int",
+          "required": true,
+          "description": "Wallet type index"
+        }
+      }
+    },
+    {
+      "name": "wallet.rescan",
+      "description": "Rescan wallet from a given height",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "height": {
+          "type": "int",
+          "required": false,
+          "description": "Block height to rescan from",
+          "default": 0
+        }
+      }
+    },
+    {
+      "name": "wallet.restore.keys",
+      "description": "Restore wallet from private keys",
+      "safe_for_non_interactive": false,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "name": {
+          "type": "String",
+          "required": true,
+          "description": "Wallet name"
+        },
+        "type": {
+          "type": "int",
+          "required": true,
+          "description": "Wallet type index"
+        }
+      }
+    },
+    {
+      "name": "wallet.restore.seed",
+      "description": "Restore wallet from seed phrase",
+      "safe_for_non_interactive": false,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "name": {
+          "type": "String",
+          "required": true,
+          "description": "Wallet name"
+        },
+        "type": {
+          "type": "int",
+          "required": true,
+          "description": "Wallet type index"
+        },
+        "seed": {
+          "type": "String",
+          "required": true,
+          "description": "Seed phrase (space-separated)"
+        },
+        "language": {
+          "type": "String",
+          "required": false,
+          "description": "Seed language",
+          "default": "English"
+        }
+      }
+    },
+    {
+      "name": "wallet.seed",
+      "description": "Show wallet seed phrase",
+      "safe_for_non_interactive": false,
+      "status": "implemented",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "wallet.sign",
+      "description": "Sign a message with wallet key",
+      "safe_for_non_interactive": false,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "message": {
+          "type": "String",
+          "required": true,
+          "description": "Message to sign"
+        },
+        "address": {
+          "type": "String",
+          "required": false,
+          "description": "Address to sign with (optional)"
+        }
+      }
+    },
+    {
+      "name": "wallet.sync.start",
+      "description": "Start wallet synchronization",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "wallet.sync.stop",
+      "description": "Stop wallet synchronization",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "wallet.verify",
+      "description": "Verify a signed message",
+      "safe_for_non_interactive": true,
+      "status": "implemented",
+      "destructive": false,
+      "args": {
+        "message": {
+          "type": "String",
+          "required": true,
+          "description": "Original message"
+        },
+        "signature": {
+          "type": "String",
+          "required": true,
+          "description": "Signature to verify"
+        },
+        "address": {
+          "type": "String",
+          "required": false,
+          "description": "Address that signed (optional)"
+        }
+      }
+    },
+    {
+      "name": "walletconnect.connect",
+      "description": "Connect via WalletConnect",
+      "safe_for_non_interactive": true,
+      "status": "unsupported",
+      "destructive": false,
+      "args": {}
+    },
+    {
+      "name": "walletconnect.sessions",
+      "description": "List WalletConnect sessions",
+      "safe_for_non_interactive": true,
+      "status": "unsupported",
+      "destructive": false,
+      "args": {}
+    }
+  ]
+}

@@ -4,6 +4,8 @@ import 'dart:io';
 
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
+import 'package:shelf_web_socket/shelf_web_socket.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'package:cake_headless/commands/command_bus.dart';
 import 'package:cake_headless/events/event_bus.dart';
@@ -63,9 +65,52 @@ class ApiServer {
       );
     }
 
+    // GET /ws — WebSocket for bidirectional JSON-RPC + event push
+    if (method == 'GET' && path == 'ws') {
+      return _wsHandler(request);
+    }
+
     return Response.notFound(jsonEncode({'error': 'Not found'}),
         headers: _jsonHeaders);
   }
+
+  late final Handler _wsHandler = webSocketHandler((WebSocketChannel webSocket, String? _) {
+    final sub = eventBus.events.listen((event) {
+      webSocket.sink.add(jsonEncode({
+        'jsonrpc': '2.0',
+        'method': 'notifications/wallet_event',
+        'params': event.toJson(),
+      }));
+    });
+    webSocket.stream.listen((message) async {
+      try {
+        final req = jsonDecode(message as String) as Map<String, dynamic>;
+        final method = req['method'] as String?;
+        final params = (req['params'] as Map<String, dynamic>?) ?? {};
+        final id = req['id'];
+        if (method == null) {
+          webSocket.sink.add(jsonEncode({
+            'jsonrpc': '2.0',
+            'error': {'code': -32600, 'message': 'Missing method'},
+            'id': id,
+          }));
+          return;
+        }
+        final result = await bus.dispatch(method, params);
+        webSocket.sink.add(jsonEncode({
+          'jsonrpc': '2.0',
+          'id': id,
+          'result': result.toJson(serializeData),
+        }));
+      } catch (e) {
+        webSocket.sink.add(jsonEncode({
+          'jsonrpc': '2.0',
+          'error': {'code': -32700, 'message': 'Parse error: $e'},
+          'id': null,
+        }));
+      }
+    }, onDone: () => sub.cancel());
+  });
 
   static const _jsonHeaders = {'Content-Type': 'application/json'};
 

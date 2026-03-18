@@ -60,6 +60,10 @@ jobs:
         run: dart test
         working-directory: packages/cake_console
 
+      - name: Verify manifest parity
+        run: dart run tool/generate_manifest.dart --verify
+        working-directory: packages/cake_headless
+
       - name: Verify binary compiles
         run: dart build cli
         working-directory: packages/cake_console
