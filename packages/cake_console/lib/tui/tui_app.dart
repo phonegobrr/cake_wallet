@@ -15,6 +15,11 @@ import 'package:cake_console/tui/screens/history_screen.dart';
 import 'package:cake_console/tui/screens/exchange_screen.dart';
 import 'package:cake_console/tui/screens/settings_screen.dart';
 import 'package:cake_console/tui/screens/contacts_screen.dart';
+import 'package:cake_console/tui/screens/nodes_screen.dart';
+import 'package:cake_console/tui/screens/backup_screen.dart';
+import 'package:cake_console/tui/screens/coin_control_screen.dart';
+import 'package:cake_console/tui/screens/token_screen.dart';
+import 'package:cake_console/tui/screens/command_palette_screen.dart';
 
 class TuiApp {
   final CommandBus commandBus;
@@ -34,12 +39,14 @@ class TuiApp {
 
   // Hotkey-to-tab mapping
   static const _hotkeyMap = {
-    's': 2, // Send
-    'r': 3, // Receive
-    'w': 1, // Wallets
-    'e': 5, // Exchange
-    'h': 4, // History
-    'c': 7, // Contacts
+    's': 2,  // Send
+    'r': 3,  // Receive
+    'w': 1,  // Wallets
+    'e': 5,  // Exchange
+    'h': 4,  // History
+    'c': 7,  // Contacts
+    'n': 8,  // Nodes
+    'b': 9,  // Backup
   };
 
   TuiApp({
@@ -48,14 +55,19 @@ class TuiApp {
     TerminalDriver? driver,
   }) : terminal = driver ?? TerminalDriver() {
     screens = [
-      DashboardScreen(commandBus),
-      WalletListScreen(commandBus),
-      SendScreen(commandBus),
-      ReceiveScreen(commandBus),
-      HistoryScreen(commandBus),
-      ExchangeScreen(commandBus),
-      SettingsScreen(commandBus),
-      ContactsScreen(commandBus),
+      DashboardScreen(commandBus),    // 0
+      WalletListScreen(commandBus),   // 1
+      SendScreen(commandBus),         // 2
+      ReceiveScreen(commandBus),      // 3
+      HistoryScreen(commandBus),      // 4
+      ExchangeScreen(commandBus),     // 5
+      SettingsScreen(commandBus),     // 6
+      ContactsScreen(commandBus),     // 7
+      NodesScreen(commandBus),        // 8
+      BackupScreen(commandBus),       // 9
+      CoinControlScreen(commandBus),  // 10
+      TokenScreen(commandBus),        // 11
+      CommandPaletteScreen(commandBus), // 12
     ];
 
     // Wire render callbacks for async state changes
@@ -125,6 +137,14 @@ class TuiApp {
         }
         if (event.key == TerminalKey.shiftTab) {
           await _switchTab((_activeTab - 1 + screens.length) % screens.length);
+          _render();
+          continue;
+        }
+
+        // ':' always opens command palette regardless of capture mode
+        if (event.key == TerminalKey.char && event.char == ':' &&
+            _activeTab != screens.length - 1) {
+          await _switchTab(screens.length - 1); // Command palette is last
           _render();
           continue;
         }
