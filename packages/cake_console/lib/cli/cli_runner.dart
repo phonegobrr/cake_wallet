@@ -185,7 +185,6 @@ class CompoundCliCommand extends Command<void> {
     // e.g. for top-level "wallet" group, prefix = "wallet"
     // e.g. for nested "restore" under "wallet", prefix = "wallet.restore"
     final prefixDot = '$_prefix.';
-    final prefixDepth = _prefix.split('.').length;
 
     // Find standalone command matching this exact prefix
     for (final cmd in commands) {

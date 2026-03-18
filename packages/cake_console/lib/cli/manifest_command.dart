@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:args/command_runner.dart';
 import 'package:cake_headless/commands/command_bus.dart';
-import 'package:cake_console/cli/json_output.dart' show serializeData;
 
 /// Output the command manifest as JSON.
 class ManifestCommand extends Command<void> {

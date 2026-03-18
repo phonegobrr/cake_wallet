@@ -4,8 +4,6 @@ import 'dart:io';
 
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
-import 'package:shelf_router/shelf_router.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'package:cake_headless/commands/command_bus.dart';
 import 'package:cake_headless/events/event_bus.dart';
@@ -22,34 +20,54 @@ class ApiServer {
     String bind = '127.0.0.1',
     int port = 8080,
   }) async {
-    final router = Router();
-
-    // REST command dispatch
-    router.post('/api/v1/command/<name>', _handleCommand);
-
-    // Capabilities / manifest
-    router.get('/api/v1/capabilities', _handleCapabilities);
-
-    // SSE event stream
-    router.get('/api/v1/events', _handleSSE);
-
-    // Health check
-    router.get('/api/v1/health', (Request request) {
-      return Response.ok(
-        jsonEncode({'status': 'ok', 'timestamp': DateTime.now().toIso8601String()}),
-        headers: {'Content-Type': 'application/json'},
-      );
-    });
-
     var handler = const Pipeline()
         .addMiddleware(logRequests())
         .addMiddleware(_authMiddleware())
-        .addHandler(router.call);
+        .addHandler(_router);
 
     final server = await shelf_io.serve(handler, bind, port);
     stderr.writeln('[API] Server running on http://$bind:$port');
     return server;
   }
+
+  Future<Response> _router(Request request) async {
+    final path = request.url.path;
+    final method = request.method;
+
+    // POST /api/v1/command/<name>
+    if (method == 'POST' && path.startsWith('api/v1/command/')) {
+      final name = path.substring('api/v1/command/'.length);
+      if (name.isEmpty) {
+        return Response.notFound(jsonEncode({'error': 'Missing command name'}),
+            headers: _jsonHeaders);
+      }
+      return _handleCommand(request, name);
+    }
+
+    // GET /api/v1/capabilities
+    if (method == 'GET' && path == 'api/v1/capabilities') {
+      return _handleCapabilities(request);
+    }
+
+    // GET /api/v1/events
+    if (method == 'GET' && path == 'api/v1/events') {
+      return _handleSSE(request);
+    }
+
+    // GET /api/v1/health
+    if (method == 'GET' && path == 'api/v1/health') {
+      return Response.ok(
+        jsonEncode(
+            {'status': 'ok', 'timestamp': DateTime.now().toIso8601String()}),
+        headers: _jsonHeaders,
+      );
+    }
+
+    return Response.notFound(jsonEncode({'error': 'Not found'}),
+        headers: _jsonHeaders);
+  }
+
+  static const _jsonHeaders = {'Content-Type': 'application/json'};
 
   Middleware _authMiddleware() {
     return (Handler handler) {
@@ -59,7 +77,7 @@ class ApiServer {
           if (auth != 'Bearer $authToken') {
             return Response.forbidden(
               jsonEncode({'error': 'Unauthorized'}),
-              headers: {'Content-Type': 'application/json'},
+              headers: _jsonHeaders,
             );
           }
         }
@@ -77,12 +95,12 @@ class ApiServer {
       final result = await bus.dispatch(name, params);
       return Response.ok(
         jsonEncode(result.toJson(serializeData)),
-        headers: {'Content-Type': 'application/json'},
+        headers: _jsonHeaders,
       );
     } catch (e) {
       return Response.internalServerError(
         body: jsonEncode({'success': false, 'error': e.toString()}),
-        headers: {'Content-Type': 'application/json'},
+        headers: _jsonHeaders,
       );
     }
   }
@@ -107,21 +125,16 @@ class ApiServer {
               })
           .toList(),
     };
-    return Response.ok(
-      jsonEncode(manifest),
-      headers: {'Content-Type': 'application/json'},
-    );
+    return Response.ok(jsonEncode(manifest), headers: _jsonHeaders);
   }
 
   Future<Response> _handleSSE(Request request) async {
-    // Server-Sent Events stream
     final controller = StreamController<List<int>>();
     final sub = eventBus.events.listen((event) {
       final json = jsonEncode(event.toJson());
       controller.add(utf8.encode('data: $json\n\n'));
     });
 
-    // Clean up when client disconnects
     controller.onCancel = () {
       sub.cancel();
     };
@@ -133,16 +146,6 @@ class ApiServer {
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
       },
-    );
-  }
-
-  /// Create a WebSocket handler for bidirectional JSON-RPC + event push
-  FutureOr<Response> handleWebSocket(Request request) {
-    // Use shelf_web_socket or raw upgrade — keeping simple for now
-    // This would be registered as: router.get('/ws', handleWebSocket);
-    return Response(
-      HttpStatus.notImplemented,
-      body: 'WebSocket endpoint — use /api/v1/events for SSE or /api/v1/command for REST',
     );
   }
 }

@@ -261,7 +261,7 @@ Future<Uint8List> _getOrCreateEncryptionKey(String keyPath) async {
 void _registerCliSubcommands(
     CommandRunner runner, CommandBus bus, List<String> args,
     WalletEventBus eventBus) {
-  final isWatch = () => args.contains('--watch');
+  bool isWatch() => args.contains('--watch');
   // Group commands by top-level prefix
   final groups = <String, List<WalletCommand>>{};
   for (final cmd in bus.commands) {
