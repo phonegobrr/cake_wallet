@@ -33,12 +33,13 @@ class McpCommand extends Command<void> {
   String get description => 'Start MCP server (JSON-RPC over stdio)';
 
   final CommandBus _bus;
+  final WalletEventBus _eventBus;
 
-  McpCommand(this._bus);
+  McpCommand(this._bus, this._eventBus);
 
   @override
   Future<void> run() async {
-    final server = McpServer(_bus);
+    final server = McpServer(_bus, _eventBus);
     await server.serve();
   }
 }

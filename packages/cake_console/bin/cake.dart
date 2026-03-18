@@ -61,7 +61,7 @@ Future<void> main(List<String> args) async {
   // Build CLI runner
   final runner = CommandRunner<void>('cake', 'Cake Wallet CLI/TUI')
     ..addCommand(TuiCommand(bus, ctx.eventBus))
-    ..addCommand(McpCommand(bus));
+    ..addCommand(McpCommand(bus, ctx.eventBus));
 
   // Generate CLI subcommands from dotted command names
   _registerCliSubcommands(runner, bus, args);
