@@ -1,11 +1,19 @@
+import 'package:cw_core/anonpay_invoice_info.dart';
 import 'package:cw_core/cake_hive.dart';
+import 'package:cw_core/contact.dart';
 import 'package:cw_core/db/sqlite.dart';
+import 'package:cw_core/exchange_template.dart';
 import 'package:cw_core/generate_name.dart' show setAssetLoader;
+import 'package:cw_core/haven_seed_store.dart';
 import 'package:cw_core/node.dart';
+import 'package:cw_core/order.dart';
 import 'package:cw_core/payjoin_session.dart';
 import 'package:cw_core/register_adapters.dart';
 import 'package:cw_core/root_dir.dart';
 import 'package:cw_core/secure_storage.dart';
+import 'package:cw_core/template.dart';
+import 'package:cw_core/trade.dart';
+import 'package:cw_core/transaction_description.dart';
 import 'package:cw_core/unspent_coins_info.dart';
 import 'package:cw_core/utils/proxy_wrapper.dart';
 import 'package:cw_core/utils/tor/disabled.dart';
@@ -45,6 +53,15 @@ Future<void> initializeHeadlessCore({
   await CakeHive.openBox<Node>('${Node.boxName}pow');
   await CakeHive.openBox<UnspentCoinsInfo>(UnspentCoinsInfo.boxName);
   await CakeHive.openBox<PayjoinSession>(PayjoinSession.boxName);
+  // Extracted model boxes (Section 3.2)
+  await CakeHive.openBox<Contact>(Contact.boxName);
+  await CakeHive.openBox<Trade>(Trade.boxName);
+  await CakeHive.openBox<Template>(Template.boxName);
+  await CakeHive.openBox<ExchangeTemplate>(ExchangeTemplate.boxName);
+  await CakeHive.openBox<Order>(Order.boxName);
+  await CakeHive.openBox<TransactionDescription>(TransactionDescription.boxName);
+  await CakeHive.openBox<AnonpayInvoiceInfo>(AnonpayInvoiceInfo.boxName);
+  await CakeHive.openBox<HavenSeedStore>(HavenSeedStore.boxName);
 
   // Register SecureStorage in GetIt
   final di = GetIt.instance;

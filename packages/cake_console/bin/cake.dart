@@ -9,6 +9,7 @@ import 'package:cake_console/cli/host_command.dart';
 import 'package:cake_console/cli/watch_command.dart';
 import 'package:cake_console/cli/manifest_command.dart';
 import 'package:cw_core/cake_hive.dart';
+import 'package:cw_core/contact.dart';
 import 'package:cw_core/node.dart';
 import 'package:cw_core/utils/print_verbose.dart' show printVSink;
 
@@ -223,6 +224,48 @@ void _wireBridgeCallbacks(CakeRuntimeContext ctx, FileSecureStorage secureStorag
     // Full domain resolution is available when the bridge package wires
     // an AddressResolver-backed callback.
     return input;
+  };
+
+  // Wire listContacts from Hive box
+  ctx.listContacts ??= () async {
+    final box = CakeHive.box<Contact>(Contact.boxName);
+    return box.values
+        .map((c) => AddressEntry(
+              address: c.address,
+              label: c.name,
+              currencyTitle: c.type.title,
+            ))
+        .toList();
+  };
+
+  // Wire addContact to Hive box
+  ctx.addContact ??= (String name, String address, String? currency) async {
+    final box = CakeHive.box<Contact>(Contact.boxName);
+    final contact = Contact(name: name, address: address);
+    await box.add(contact);
+    return AddressEntry(address: address, label: name, currencyTitle: currency ?? '');
+  };
+
+  // Wire deleteContact from Hive box
+  ctx.deleteContact ??= (String name) async {
+    final box = CakeHive.box<Contact>(Contact.boxName);
+    final contact = box.values.where((c) => c.name == name).firstOrNull;
+    if (contact != null) {
+      await contact.delete();
+    }
+  };
+
+  // Wire editContact via Hive box
+  ctx.editContact ??= (String oldName, String newName, String address, String? currency) async {
+    final box = CakeHive.box<Contact>(Contact.boxName);
+    final contact = box.values.where((c) => c.name == oldName).firstOrNull;
+    if (contact == null) {
+      throw StateError('Contact "$oldName" not found');
+    }
+    contact.name = newName;
+    contact.address = address;
+    await contact.save();
+    return AddressEntry(address: address, label: newName, currencyTitle: currency ?? '');
   };
 }
 
