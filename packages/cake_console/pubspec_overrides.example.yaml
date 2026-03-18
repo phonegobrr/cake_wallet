@@ -1,5 +1,14 @@
-# Copy to packages/cake_console/pubspec_overrides.yaml for local development
-# Do NOT commit the actual overrides file (it is gitignored)
+# Copy to packages/cake_console/pubspec_overrides.yaml for local development.
+# Do NOT commit the actual overrides file (it is gitignored).
+
 dependency_overrides:
-  dart_lipgloss:
-    path: ~/Desktop/working/dark_lipgloss
+  # Required: stub out Flutter-dependent transitive deps for pure-Dart compilation
+  torch_dart:
+    path: ../torch_dart_stub
+  cake_backup:
+    path: ../cake_backup_stub
+
+  # Optional: use local dart_lipgloss checkout for TUI development
+  # Note: folder name is "dark_lipgloss", package name is "dart_lipgloss"
+  # dart_lipgloss:
+  #   path: ~/Desktop/working/dark_lipgloss

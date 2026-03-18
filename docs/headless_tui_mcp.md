@@ -74,8 +74,10 @@ Entry Point (cake.dart)
 
 ### MCP Server (`cake mcp`)
 - Protocol: JSON-RPC 2.0 over stdio
-- Version: `2024-11-05`
+- Version: Negotiated with client (supports `2024-11-05`, `2025-03-26`, `2025-06-18`)
 - Reactive: Custom `notifications/cakewallet/wallet_event` from EventBus
+- Resources: `cake://wallet/current`, `cake://wallet/current/balance`, `cake://wallet/current/sync`
+- Resource subscriptions: `resources/subscribe` + `notifications/resources/updated`
 - MCP remote transport: Use Streamable HTTP + optional SSE (not WebSocket)
 
 ### Event Streaming (`cake watch`)
@@ -142,7 +144,8 @@ The command registry (`CommandBus`) is the single source of truth for all surfac
 | 9 | Backup | b | Export/import/verify |
 | 10 | Coin Control | - | Freeze/unfreeze UTXOs |
 | 11 | Tokens | - | Add/remove ERC20/SPL/TRC tokens |
-| 12 | Command Palette | : | Fuzzy search all commands |
+| 12 | Tor | t | Status/enable/disable |
+| 13 | Command Palette | : | Fuzzy search all commands |
 
 The Command Palette (`:`) provides TUI access to ALL registered commands without needing dedicated screens.
 

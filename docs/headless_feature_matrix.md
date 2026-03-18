@@ -64,7 +64,7 @@ Track implementation status across all surfaces.
 | Event streaming | - | Y | Y (`watch`) | Y | Y (SSE) |
 | `--watch` flag | - | - | Y | - | - |
 | Manifest output | - | - | Y (`manifest`) | - | Y |
-| Sign/verify message | Y | | U | U | U |
+| Sign/verify message | Y | | Y | Y | Y |
 | Buy/sell (fiat on-ramp) | Y | | U | U | U |
 | Buy create | Y | | U | U | U |
 | Sell providers/quote/create | Y | | U | U | U |
