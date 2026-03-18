@@ -34,6 +34,7 @@ class UnsupportedCommand extends WalletCommand<Map<String, String>> {
 
 /// Factory for all UNSUPPORTED stubs
 List<UnsupportedCommand> createUnsupportedCommands() => [
+      // Buy / Fiat on-ramp
       UnsupportedCommand(
         name: 'buy.providers',
         description: 'List fiat on-ramp providers',
@@ -43,6 +44,35 @@ List<UnsupportedCommand> createUnsupportedCommands() => [
         name: 'buy.quote',
         description: 'Get fiat purchase quote',
         reason: 'Fiat purchases require browser-based KYC flow',
+      ),
+      UnsupportedCommand(
+        name: 'buy.create',
+        description: 'Create fiat purchase',
+        reason: 'Fiat purchases require browser-based KYC flow',
+      ),
+
+      // Sell / Fiat off-ramp
+      UnsupportedCommand(
+        name: 'sell.providers',
+        description: 'List fiat off-ramp providers',
+        reason: 'Fiat sales require browser-based KYC flow',
+      ),
+      UnsupportedCommand(
+        name: 'sell.quote',
+        description: 'Get fiat sell quote',
+        reason: 'Fiat sales require browser-based KYC flow',
+      ),
+      UnsupportedCommand(
+        name: 'sell.create',
+        description: 'Create fiat sale',
+        reason: 'Fiat sales require browser-based KYC flow',
+      ),
+
+      // Cake Pay
+      UnsupportedCommand(
+        name: 'cakepay.auth',
+        description: 'Authenticate with Cake Pay',
+        reason: 'Cake Pay requires authenticated session with Cake Pay API',
       ),
       UnsupportedCommand(
         name: 'cakepay.cards',
@@ -55,15 +85,58 @@ List<UnsupportedCommand> createUnsupportedCommands() => [
         reason: 'Cake Pay requires authenticated session with Cake Pay API',
       ),
       UnsupportedCommand(
+        name: 'cakepay.account',
+        description: 'Get Cake Pay account info',
+        reason: 'Cake Pay requires authenticated session with Cake Pay API',
+      ),
+
+      // Hardware wallet
+      UnsupportedCommand(
+        name: 'hardware.list',
+        description: 'List hardware wallets',
+        reason: 'Hardware wallet requires USB/BLE access',
+      ),
+      UnsupportedCommand(
         name: 'hardware.connect',
         description: 'Connect to hardware wallet',
-        reason: 'Hardware wallet interaction requires USB/BLE which is not available headless',
+        reason: 'Hardware wallet requires USB/BLE access',
+      ),
+      UnsupportedCommand(
+        name: 'hardware.accounts',
+        description: 'List hardware wallet accounts',
+        reason: 'Hardware wallet requires USB/BLE access',
       ),
       UnsupportedCommand(
         name: 'hardware.sign',
-        description: 'Sign transaction with hardware wallet',
-        reason: 'Hardware wallet interaction requires USB/BLE which is not available headless',
+        description: 'Sign with hardware wallet',
+        reason: 'Hardware wallet requires USB/BLE access',
       ),
+
+      // WalletConnect
+      UnsupportedCommand(
+        name: 'walletconnect.connect',
+        description: 'Connect via WalletConnect',
+        reason: 'WalletConnect requires WebSocket session management and QR code interaction',
+      ),
+      UnsupportedCommand(
+        name: 'walletconnect.sessions',
+        description: 'List WalletConnect sessions',
+        reason: 'WalletConnect requires WebSocket session management',
+      ),
+
+      // Payjoin
+      UnsupportedCommand(
+        name: 'payjoin.create',
+        description: 'Create a Payjoin transaction',
+        reason: 'Payjoin requires specialized interaction flows',
+      ),
+      UnsupportedCommand(
+        name: 'payjoin.status',
+        description: 'Check Payjoin status',
+        reason: 'Payjoin requires platform-specific mobile services',
+      ),
+
+      // Message signing (wallet-type-specific)
       UnsupportedCommand(
         name: 'wallet.sign',
         description: 'Sign a message with wallet key',
