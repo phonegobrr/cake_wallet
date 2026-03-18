@@ -33,21 +33,27 @@ void wireHeadlessCallbacks(CakeRuntimeContext ctx) {
 
   // Wire addNode to Hive box
   ctx.addNode ??= (String uri, String name, bool trusted) async {
-    final box = CakeHive.box<Node>(Node.boxName);
     final wallet = ctx.wallet;
+    if (wallet == null) {
+      throw StateError('Cannot add node: no wallet is open to determine node type');
+    }
+    final box = CakeHive.box<Node>(Node.boxName);
     final node = Node(
       uri: uri,
-      type: wallet?.type,
+      type: wallet.type,
       trusted: trusted,
     )..label = name;
     await box.add(node);
     return NodeInfo(uri: uri, name: name, isActive: false, isTrusted: trusted);
   };
 
-  // Wire deleteNode from Hive box
+  // Wire deleteNode from Hive box — match by URI AND wallet type to avoid cross-type deletion
   ctx.deleteNode ??= (String uri) async {
     final box = CakeHive.box<Node>(Node.boxName);
-    final node = box.values.where((n) => n.uriRaw == uri).firstOrNull;
+    final wallet = ctx.wallet;
+    final node = box.values.where((n) =>
+        n.uriRaw == uri &&
+        (wallet == null || n.type == wallet.type)).firstOrNull;
     if (node != null) {
       await node.delete();
     }

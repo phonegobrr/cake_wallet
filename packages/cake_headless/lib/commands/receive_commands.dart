@@ -221,13 +221,21 @@ class GetReceiveUriCommand extends WalletCommand<Map<String, String>> {
     final wallet = ctx.wallet!;
     final address = wallet.walletAddresses.address;
     final amount = params['amount']?.toString();
-    // Build a standard payment URI with optional amount
-    final scheme = wallet.currency.title.toLowerCase();
-    final String uri;
-    if (amount != null && amount.isNotEmpty) {
-      uri = '$scheme:$address?amount=$amount';
-    } else {
-      uri = '$scheme:$address';
+    // Try the wallet-specific URI builder first, fallback to generic scheme
+    String uri;
+    try {
+      final paymentUri = wallet.walletAddresses.getPaymentUri(
+        amount: amount ?? '',
+      );
+      uri = paymentUri.toString();
+    } catch (_) {
+      // Fallback for wallets without a getPaymentUri method
+      final scheme = wallet.currency.title.toLowerCase();
+      if (amount != null && amount.isNotEmpty) {
+        uri = '$scheme:$address?amount=$amount';
+      } else {
+        uri = '$scheme:$address';
+      }
     }
     return CommandResult.ok({'uri': uri, 'address': address});
   }

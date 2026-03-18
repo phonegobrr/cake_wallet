@@ -130,9 +130,9 @@ class HeadlessCliCommand extends Command<void> {
     }
 
     // --watch mode: re-execute on each wallet event (read-only commands only)
-    final cmd = _bus.getCommand(headlessCommand);
+    final watchCmd = _bus.getCommand(headlessCommand);
     if (_isWatchMode() && _eventBus != null &&
-        cmd != null && cmd.isSafeForNonInteractive) {
+        watchCmd != null && watchCmd.isSafeForNonInteractive) {
       await for (final _ in _eventBus!.events) {
         final updated = await _bus.dispatch(headlessCommand, params);
         if (_isJsonMode()) {
