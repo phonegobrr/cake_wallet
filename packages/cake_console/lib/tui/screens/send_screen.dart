@@ -15,6 +15,7 @@ class SendScreen extends TuiScreen {
   bool _statusIsError = false;
   _SendState _state = _SendState.input;
   Map<String, String>? _previewData;
+  String? _resolvedAddress;
   bool _inFlight = false;
 
   SendScreen(this._bus);
@@ -87,6 +88,7 @@ class SendScreen extends TuiScreen {
       _statusMessage = null;
       _state = _SendState.input;
       _previewData = null;
+      _resolvedAddress = null;
     } else if (event.key == TerminalKey.enter) {
       if (_state == _SendState.previewing) {
         _commitSend();
@@ -132,6 +134,8 @@ class SendScreen extends TuiScreen {
       if (result.success && result.data is Map) {
         _previewData = (result.data as Map).map(
             (k, v) => MapEntry(k.toString(), v.toString()));
+        // Store the resolved address from preview for use during commit
+        _resolvedAddress = _previewData?['address'] ?? _address;
         _state = _SendState.previewing;
         _statusMessage = 'Review the preview above, then press Enter to send';
         _statusIsError = false;
@@ -152,7 +156,7 @@ class SendScreen extends TuiScreen {
     onStateChanged?.call();
 
     _bus.dispatch('send', {
-      'address': _address,
+      'address': _resolvedAddress ?? _address,
       'amount': _amount,
     }).then((result) {
       _inFlight = false;
@@ -162,6 +166,7 @@ class SendScreen extends TuiScreen {
         _address = '';
         _amount = '';
         _previewData = null;
+        _resolvedAddress = null;
         _state = _SendState.input;
       } else {
         _statusMessage = result.message ?? result.errorCode ?? 'Send failed';

@@ -47,7 +47,7 @@ class ApiServer {
         .addHandler(router.call);
 
     final server = await shelf_io.serve(handler, bind, port);
-    bus.ctx.logger.info('API Server running on http://$bind:$port');
+    stderr.writeln('[API] Server running on http://$bind:$port');
     return server;
   }
 

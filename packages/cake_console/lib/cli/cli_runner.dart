@@ -130,6 +130,9 @@ class HeadlessCliCommand extends Command<void> {
 /// Handles multi-level nesting: "wallet.restore.seed" → `cake wallet restore seed`
 /// If a standalone command matches the group name (e.g. "send"), it becomes
 /// the default run() behavior of the compound command.
+///
+/// [prefix] is the full dotted prefix consumed so far (e.g. "wallet" or "wallet.restore").
+/// Used to determine the next segment to group on.
 class CompoundCliCommand extends Command<void> {
   @override
   final String name;
@@ -138,9 +141,10 @@ class CompoundCliCommand extends Command<void> {
 
   final CommandBus _bus;
   final bool Function() _isJsonMode;
+  final String _prefix;
   /// If the group has a standalone command (e.g. "send" alongside "send.preview"),
-  /// store it here so run() dispatches it by default.
-  final String? _defaultCommand;
+  /// store its full dotted name here so run() dispatches it by default.
+  String? _defaultCommand;
 
   CompoundCliCommand({
     required String groupName,
@@ -148,31 +152,61 @@ class CompoundCliCommand extends Command<void> {
     required List<WalletCommand> commands,
     required CommandBus bus,
     required bool Function() isJsonMode,
+    String? prefix,
   })  : name = groupName,
         description = groupDescription,
         _bus = bus,
         _isJsonMode = isJsonMode,
-        _defaultCommand = commands.any((c) => c.name == groupName)
-            ? groupName
-            : null {
-    // Separate standalone (group-name-only) from dotted commands
-    final dotted = commands.where((c) => c.name != groupName).toList();
+        _prefix = prefix ?? groupName {
+    // The prefix includes all segments consumed so far.
+    // e.g. for top-level "wallet" group, prefix = "wallet"
+    // e.g. for nested "restore" under "wallet", prefix = "wallet.restore"
+    final prefixDot = '$_prefix.';
+    final prefixDepth = _prefix.split('.').length;
 
-    // Build a recursive tree for multi-level nesting
+    // Find standalone command matching this exact prefix
+    for (final cmd in commands) {
+      if (cmd.name == _prefix) {
+        _defaultCommand = cmd.name;
+        // Register default command's args on this command's argParser
+        for (final entry in cmd.args.entries) {
+          final arg = entry.value;
+          if (arg.type == bool) {
+            argParser.addFlag(entry.key, help: arg.description,
+                defaultsTo: arg.defaultValue == true ||
+                    arg.defaultValue?.toString() == 'true');
+          } else {
+            argParser.addOption(entry.key, help: arg.description,
+                mandatory: arg.required,
+                defaultsTo: arg.defaultValue?.toString(),
+                allowed: arg.choices);
+          }
+        }
+        break;
+      }
+    }
+
+    // Group remaining dotted commands by the next segment after the prefix
     final subGroups = <String, List<WalletCommand>>{};
-    for (final cmd in dotted) {
-      final parts = cmd.name.split('.');
-      if (parts.length < 2) continue;
-      final subName = parts[1];
-      subGroups.putIfAbsent(subName, () => []).add(cmd);
+    for (final cmd in commands) {
+      if (cmd.name == _prefix) continue; // standalone already handled
+      if (!cmd.name.startsWith(prefixDot)) continue;
+
+      final remaining = cmd.name.substring(prefixDot.length);
+      final nextSegment = remaining.split('.').first;
+      subGroups.putIfAbsent(nextSegment, () => []).add(cmd);
     }
 
     for (final entry in subGroups.entries) {
       final subName = entry.key;
       final subCommands = entry.value;
+      final subPrefix = '$_prefix.$subName';
 
-      if (subCommands.length == 1) {
-        // Single subcommand — register directly
+      // Check if all subcommands resolve to exactly this sub-prefix level
+      final allDirect = subCommands.every((c) => c.name == subPrefix);
+
+      if (subCommands.length == 1 && allDirect) {
+        // Single subcommand at this level — register directly
         final cmd = subCommands.first;
         try {
           addSubcommand(HeadlessCliCommand(
@@ -182,12 +216,9 @@ class CompoundCliCommand extends Command<void> {
             bus: bus,
             isJsonMode: isJsonMode,
           ));
-        } on ArgumentError catch (_) {
-          // Already registered
-        }
+        } on ArgumentError catch (_) {}
       } else {
-        // Multiple sub-subcommands — create nested compound
-        // e.g. wallet.restore.seed, wallet.restore.keys → cake wallet restore seed|keys
+        // Multiple commands or deeper nesting — recurse
         try {
           addSubcommand(CompoundCliCommand(
             groupName: subName,
@@ -196,10 +227,9 @@ class CompoundCliCommand extends Command<void> {
             commands: subCommands,
             bus: bus,
             isJsonMode: isJsonMode,
+            prefix: subPrefix,
           ));
-        } on ArgumentError catch (_) {
-          // Already registered
-        }
+        } on ArgumentError catch (_) {}
       }
     }
   }
@@ -208,7 +238,7 @@ class CompoundCliCommand extends Command<void> {
   Future<void> run() async {
     if (_defaultCommand != null) {
       // Dispatch the standalone command (e.g. "send" when user runs `cake send`)
-      final cmd = _bus.getCommand(_defaultCommand);
+      final cmd = _bus.getCommand(_defaultCommand!);
       final params = <String, dynamic>{};
       if (cmd != null) {
         for (final arg in cmd.args.keys) {
@@ -217,7 +247,7 @@ class CompoundCliCommand extends Command<void> {
           }
         }
       }
-      final result = await _bus.dispatch(_defaultCommand, params);
+      final result = await _bus.dispatch(_defaultCommand!, params);
       if (_isJsonMode()) {
         outputJson(result);
       } else {

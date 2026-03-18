@@ -15,11 +15,7 @@ class WalletLock {
         final content = (await lockFile.readAsString()).trim();
         final existingPid = int.tryParse(content);
         if (existingPid != null && existingPid != pid) {
-          try {
-            // Signal 0 tests if process exists without killing it
-            Process.killPid(existingPid, ProcessSignal.sigurg);
-            // Process is alive — lock is valid
-          } catch (_) {
+          if (!_isProcessRunning(existingPid)) {
             // Process is dead — safe to take over
             await lockFile.delete();
           }
@@ -44,6 +40,22 @@ class WalletLock {
       );
     }
     _lockFile!.writeStringSync('$pid\n');
+  }
+
+  /// Check if a process with the given PID is currently running.
+  static bool _isProcessRunning(int checkPid) {
+    try {
+      if (Platform.isWindows) {
+        final result = Process.runSync('tasklist', ['/FI', 'PID eq $checkPid', '/NH']);
+        return result.stdout.toString().contains('$checkPid');
+      } else {
+        // On Unix, kill -0 checks if process exists without sending a signal
+        final result = Process.runSync('kill', ['-0', '$checkPid']);
+        return result.exitCode == 0;
+      }
+    } catch (_) {
+      return false;
+    }
   }
 
   void release() {

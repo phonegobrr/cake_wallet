@@ -25,6 +25,7 @@ class TuiApp {
   int _activeTab = 0;
   StreamSubscription? _eventSub;
   Timer? _refreshTimer;
+  Timer? _resizeTimer;
   bool _rendering = false;
   bool _pendingRender = false;
   bool _cleaned = false;
@@ -81,7 +82,7 @@ class TuiApp {
       // Windows: poll for terminal resize since SIGWINCH doesn't exist
       int lastWidth = terminal.width;
       int lastHeight = terminal.height;
-      Timer.periodic(Duration(milliseconds: 500), (_) {
+      _resizeTimer = Timer.periodic(Duration(milliseconds: 500), (_) {
         if (terminal.width != lastWidth || terminal.height != lastHeight) {
           lastWidth = terminal.width;
           lastHeight = terminal.height;
@@ -261,6 +262,7 @@ class TuiApp {
     _cleaned = true;
     _refreshTimer?.cancel();
     _refreshDebounce?.cancel();
+    _resizeTimer?.cancel();
     _eventSub?.cancel();
     terminal.disableRawMode();
     terminal.exitAlternateScreen();
